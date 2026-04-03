@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "obsidian-remarkable-sync"
+version = "0.1.0"
+description = "Sync an Obsidian vault to a reMarkable tablet"
+requires-python = ">=3.14"
+dependencies = [
+    "click>=8.1",
+    "pydantic>=2.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-tmp-files>=0.0.2",
+]
+
+[project.scripts]
+obsidian-remarkable-sync = "obsidian_remarkable_sync.cli:cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

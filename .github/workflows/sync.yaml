@@ -1,0 +1,83 @@
+name: Sync to reMarkable
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**.md"
+      - "sync-config.yaml"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Force re-sync all files"
+        type: boolean
+        default: false
+      dry_run:
+        description: "Dry run (show changes without syncing)"
+        type: boolean
+        default: false
+
+# Prevent concurrent syncs which could corrupt state
+concurrency:
+  group: remarkable-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    # Only run if the RMAPI_CONFIG secret is set
+    if: ${{ vars.SYNC_ENABLED != 'false' }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v4
+
+      - name: Install Pandoc
+        run: sudo apt-get update && sudo apt-get install -y pandoc
+
+      - name: Install rmapi
+        run: |
+          curl -sL "https://github.com/ddvk/rmapi/releases/download/v0.0.32/rmapi-linux-amd64.tar.gz" -o /tmp/rmapi.tar.gz
+          tar xzf /tmp/rmapi.tar.gz -C /usr/local/bin/
+          chmod +x /usr/local/bin/rmapi
+
+      - name: Configure rmapi auth
+        run: |
+          mkdir -p ~/.rmapi
+          echo "${{ secrets.RMAPI_CONFIG }}" > ~/.rmapi/rmapi.conf
+        # Fail early if the secret is empty
+      - name: Verify rmapi auth
+        run: |
+          if [ ! -s ~/.rmapi/rmapi.conf ]; then
+            echo "::error::RMAPI_CONFIG secret is not set. See SETUP.md for instructions."
+            exit 1
+          fi
+
+      - name: Build sync flags
+        id: flags
+        run: |
+          FLAGS=""
+          if [ "${{ inputs.force }}" = "true" ]; then
+            FLAGS="$FLAGS --force"
+          fi
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            FLAGS="$FLAGS --dry-run"
+          fi
+          echo "flags=$FLAGS" >> "$GITHUB_OUTPUT"
+
+      - name: Install obsidian-remarkable-sync
+        run: uv pip install git+https://github.com/lornest/obsidian-remarkable-sync.git
+
+      - name: Run sync
+        run: uv run obsidian-remarkable-sync sync --vault-path . ${{ steps.flags.outputs.flags }}
+
+      - name: Commit updated sync state
+        if: ${{ inputs.dry_run != 'true' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .sync-state.json
+          git diff --staged --quiet || git commit -m "chore: update reMarkable sync state"
+          git push
