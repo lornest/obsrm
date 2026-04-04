@@ -10,6 +10,8 @@ class FileEntry:
     rel_path: str
     content_hash: str
     remote_path: str
+    remote_modified: str = ""
+    origin: str = "push"
 
 
 @dataclass
@@ -50,6 +52,8 @@ class SyncState:
                 rel_path=rel_path,
                 content_hash=entry_data["content_hash"],
                 remote_path=entry_data["remote_path"],
+                remote_modified=entry_data.get("remote_modified", ""),
+                origin=entry_data.get("origin", "push"),
             )
 
     def save(self) -> None:
@@ -58,6 +62,8 @@ class SyncState:
                 entry.rel_path: {
                     "content_hash": entry.content_hash,
                     "remote_path": entry.remote_path,
+                    "remote_modified": entry.remote_modified,
+                    "origin": entry.origin,
                 }
                 for entry in self.entries.values()
             }
@@ -92,11 +98,20 @@ class SyncState:
 
         return changeset
 
-    def update_entry(self, rel_path: str, content_hash: str, remote_path: str) -> None:
+    def update_entry(
+        self,
+        rel_path: str,
+        content_hash: str,
+        remote_path: str,
+        remote_modified: str = "",
+        origin: str = "push",
+    ) -> None:
         self.entries[rel_path] = FileEntry(
             rel_path=rel_path,
             content_hash=content_hash,
             remote_path=remote_path,
+            remote_modified=remote_modified,
+            origin=origin,
         )
 
     def remove_entry(self, rel_path: str) -> None:
@@ -105,3 +120,10 @@ class SyncState:
     def known_remote_paths(self) -> set[str]:
         """Return the set of all remote paths tracked in state."""
         return {entry.remote_path for entry in self.entries.values()}
+
+    def entry_for_remote(self, remote_path: str) -> FileEntry | None:
+        """Find the entry tracking a given remote path."""
+        for entry in self.entries.values():
+            if entry.remote_path == remote_path:
+                return entry
+        return None

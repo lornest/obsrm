@@ -7,7 +7,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from obsidian_remarkable_sync.remarkable import RemarkableClient
-from obsidian_remarkable_sync.rm_extract import extract_text_from_rmdoc, pages_to_markdown
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +92,8 @@ def _handle_notebook(
     Extracts typed text to markdown. If no text is found (pure handwriting),
     falls back to SVG rendering embedded in markdown.
     """
+    from obsidian_remarkable_sync.rm_extract import extract_text_from_rmdoc, pages_to_markdown
+
     pages = extract_text_from_rmdoc(rmdoc_path)
 
     if pages:

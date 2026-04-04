@@ -14,7 +14,7 @@ import click
 from obsidian_remarkable_sync.config import load_config
 from obsidian_remarkable_sync.converter import ConversionError, convert_file
 from obsidian_remarkable_sync.remarkable import RemarkableClient, RmapiError
-from obsidian_remarkable_sync.sync_state import Changeset, SyncState
+from obsidian_remarkable_sync.sync_state import Changeset, FileEntry, SyncState
 from obsidian_remarkable_sync.vault import resolve_remote_path, scan_vault
 
 logger = logging.getLogger(__name__)
@@ -229,6 +229,28 @@ def _cleanup_empty_folders(
                 break
 
 
+def _delete_pulled_file(vault_path: Path, entry: FileEntry, attachments_folder: str) -> None:
+    """Delete a pulled file's markdown and any associated attachments."""
+    md_path = vault_path / entry.rel_path
+    if md_path.exists():
+        md_path.unlink()
+
+    # Derive attachment location: attachments_folder / parent_dir / name.*
+    rel = Path(entry.rel_path)
+    name = rel.stem
+    rel_dir = rel.parent
+
+    att_dir = vault_path / attachments_folder
+    if rel_dir != Path("."):
+        att_dir = att_dir / rel_dir
+
+    if att_dir.exists():
+        # Remove matching attachments (pdf, rmdoc, svg pages)
+        for att_file in att_dir.iterdir():
+            if att_file.stem == name or att_file.stem.startswith(f"{name}_p"):
+                att_file.unlink()
+
+
 @cli.command()
 @click.option(
     "--vault-path",
@@ -276,33 +298,93 @@ def pull(
     remote_files = list_remote_files(client, config.remarkable.target_folder)
     click.echo(f"Found {len(remote_files)} files on reMarkable")
 
-    # Find files not in sync state (i.e. not pushed from Obsidian)
+    # Find new files and files modified since last pull
     state_file = vault_path / config.sync.state_file
     state = SyncState(state_file)
     known_remotes = state.known_remote_paths()
 
     new_files = [path for path in remote_files if path not in known_remotes]
+    changed_files: list[str] = []
 
-    if not new_files:
-        click.echo("Nothing to pull — all remote files are already tracked.")
+    # Check pull-origin files for modifications via rmapi stat
+    pull_origin_remotes = [
+        path
+        for path in remote_files
+        if path in known_remotes and (e := state.entry_for_remote(path)) and e.origin == "pull"
+    ]
+    if pull_origin_remotes:
+        click.echo("Checking for remote changes...")
+        for remote_path in pull_origin_remotes:
+            entry = state.entry_for_remote(remote_path)
+            if not entry:
+                continue
+            try:
+                metadata = client.stat(remote_path)
+                remote_mod = metadata.get("ModifiedClient", "")
+            except RmapiError:
+                logger.debug("Could not stat %s, skipping change check", remote_path)
+                continue
+            if remote_mod and remote_mod != entry.remote_modified:
+                changed_files.append(remote_path)
+
+    # Detect files deleted on reMarkable
+    remote_path_set = set(remote_files.keys())
+    deleted_pull: list[FileEntry] = []  # pull-origin: delete local files
+    deleted_push: list[FileEntry] = []  # push-origin: just clear state
+    for entry in list(state.entries.values()):
+        if entry.remote_path and entry.remote_path not in remote_path_set:
+            if entry.origin == "pull":
+                deleted_pull.append(entry)
+            else:
+                deleted_push.append(entry)
+
+    pull_files = [(p, "new") for p in new_files] + [(p, "changed") for p in changed_files]
+    has_work = pull_files or deleted_pull or deleted_push
+
+    if not has_work:
+        click.echo("Nothing to pull — all remote files are already up to date.")
         return
 
-    click.echo(f"New files to pull: {len(new_files)}")
+    if new_files:
+        click.echo(f"New files to pull: {len(new_files)}")
+    if changed_files:
+        click.echo(f"Changed files to pull: {len(changed_files)}")
+    if deleted_pull:
+        click.echo(f"Deleted on reMarkable (will remove locally): {len(deleted_pull)}")
+    if deleted_push:
+        click.echo(f"Deleted on reMarkable (will re-push next sync): {len(deleted_push)}")
 
     if dry_run:
-        for path in new_files:
+        for path, kind in pull_files:
             rel = remote_path_to_vault_rel(path, config.remarkable.target_folder)
-            click.echo(f"  + {rel}")
+            marker = "+" if kind == "new" else "~"
+            click.echo(f"  {marker} {rel}")
+        for entry in deleted_pull:
+            click.echo(f"  - {entry.rel_path}")
+        for entry in deleted_push:
+            click.echo(f"  x {entry.rel_path} (state only)")
         click.echo("(dry run -- no changes made)")
         return
 
+    # Process deletions first
+    for entry in deleted_pull:
+        _delete_pulled_file(vault_path, entry, config.pull.attachments_folder)
+        click.echo(f"  Deleted {entry.rel_path}")
+        state.remove_entry(entry.rel_path)
+    for entry in deleted_push:
+        state.remove_entry(entry.rel_path)
+    if deleted_pull or deleted_push:
+        state.save()
+
     errors = 0
     done = 0
+    total = len(pull_files)
 
     try:
-        for i, remote_path in enumerate(new_files, 1):
+        for i, (remote_path, kind) in enumerate(pull_files, 1):
             rel = remote_path_to_vault_rel(remote_path, config.remarkable.target_folder)
-            click.echo(f"[{i}/{len(new_files)}] {rel}")
+            label = "(changed)" if kind == "changed" else ""
+            click.echo(f"[{i}/{total}] {rel} {label}".rstrip())
             try:
                 md_path, att_path = pull_file(
                     client,
@@ -322,12 +404,19 @@ def pull(
 
             rel_local = md_path.relative_to(vault_path).as_posix()
             content_hash = _hash_file(md_path)
-            state.update_entry(rel_local, content_hash, remote_path)
+            # Store remote modification time for change detection
+            remote_modified = ""
+            try:
+                metadata = client.stat(remote_path)
+                remote_modified = metadata.get("ModifiedClient", "")
+            except RmapiError:
+                pass
+            state.update_entry(rel_local, content_hash, remote_path, remote_modified, "pull")
             state.save()
             done += 1
             click.echo(f"  -> {rel_local}")
 
-            if i < len(new_files):
+            if i < total:
                 time.sleep(RMAPI_DELAY)
 
     except (KeyboardInterrupt, Exception) as e:
@@ -338,11 +427,18 @@ def pull(
         click.echo(f"Progress saved: {done} files pulled before interruption.", err=True)
         sys.exit(1)
 
+    deleted_count = len(deleted_pull)
     if errors:
-        click.echo(f"\nCompleted: {done} succeeded, {errors} failed.", err=True)
+        parts = [f"{done} pulled", f"{errors} failed"]
+        if deleted_count:
+            parts.append(f"{deleted_count} deleted")
+        click.echo(f"\nCompleted: {', '.join(parts)}.", err=True)
         sys.exit(1)
     else:
-        click.echo(f"\nPull complete: {done} files pulled.")
+        parts = [f"{done} files pulled"]
+        if deleted_count:
+            parts.append(f"{deleted_count} deleted")
+        click.echo(f"\nPull complete: {', '.join(parts)}.")
 
 
 @cli.command()

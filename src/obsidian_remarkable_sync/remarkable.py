@@ -55,12 +55,13 @@ class RemarkableClient:
         logger.info("Uploaded %s -> %s", local_path.name, remote_folder)
 
     def delete(self, remote_path: str) -> None:
-        """Delete a document from reMarkable."""
-        try:
-            self._run("rm", remote_path)
-            logger.info("Deleted %s", remote_path)
-        except RmapiError as e:
-            logger.warning("Failed to delete %s: %s", remote_path, e)
+        """Delete a document from reMarkable.
+
+        Raises RmapiError if the deletion fails so callers can keep
+        local state in sync with the remote.
+        """
+        self._run("rm", remote_path)
+        logger.info("Deleted %s", remote_path)
 
     def list_folder(self, remote_path: str = "/") -> list[str]:
         """List contents of a folder on reMarkable."""
@@ -167,6 +168,19 @@ class RemarkableClient:
             if matches:
                 return matches[0]
         return None
+
+    def stat(self, remote_path: str) -> dict[str, str]:
+        """Get metadata for a remote file.
+
+        Returns dict with keys like ID, Name, Version, ModifiedClient, Type, etc.
+        """
+        result = self._run("stat", remote_path)
+        metadata: dict[str, str] = {}
+        for line in result.stdout.splitlines():
+            if ":" in line:
+                key, _, value = line.partition(":")
+                metadata[key.strip().strip('"')] = value.strip().strip('"')
+        return metadata
 
     def replace(self, local_path: Path, remote_path: str) -> None:
         """Replace a document on reMarkable.

@@ -3,9 +3,6 @@
 import zipfile
 from pathlib import Path
 
-from rmscene import RootTextBlock, read_blocks
-from rmscene.scene_items import ParagraphStyle
-
 
 def extract_text_from_rmdoc(rmdoc_path: Path) -> list[dict]:
     """Extract text content from an .rmdoc file.
@@ -26,6 +23,9 @@ def extract_text_from_rmdoc(rmdoc_path: Path) -> list[dict]:
 
 def _extract_page_text(f) -> dict:
     """Extract text from a single .rm file handle."""
+    from rmscene import RootTextBlock, read_blocks
+    from rmscene.scene_items import ParagraphStyle
+
     paragraphs = []
 
     try:

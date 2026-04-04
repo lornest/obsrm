@@ -115,3 +115,55 @@ def test_full_note_with_images():
     assert all(img[0].name == "test-image.png" for img in images)
     # External URL preserved
     assert "https://example.com/image.png" in processed
+
+
+# --- Branch coverage for _resolve_embeds ---
+
+
+def test_recursion_limit():
+    """Embeds nested deeper than 10 levels stop resolving."""
+    from obsidian_remarkable_sync.markdown_processor import _resolve_embeds
+
+    # depth=11 should return content unchanged
+    content = "![[note2]]\n"
+    result = _resolve_embeds(content, FIXTURES, seen=set(), depth=11)
+    assert result == content
+
+
+def test_circular_embed_actual_cycle(tmp_path):
+    """Two files that embed each other should hit the circular embed guard."""
+    (tmp_path / "a.md").write_text("before\n![[b]]\nafter\n")
+    (tmp_path / "b.md").write_text("hello\n![[a]]\ngoodbye\n")
+    processed, _, _ = process_markdown(
+        (tmp_path / "a.md").read_text(), tmp_path / "a.md", tmp_path
+    )
+    assert "Circular embed" in processed
+    assert "hello" in processed
+
+
+def test_embed_encoding_error(tmp_path):
+    """A file that can't be read as UTF-8 should produce an error message."""
+    bad = tmp_path / "bad.md"
+    bad.write_bytes(b"\x80\x81\x82")
+    content = "![[bad]]\n"
+    processed, _, _ = process_markdown(content, tmp_path / "main.md", tmp_path)
+    assert "encoding error" in processed
+
+
+def test_heading_embed_missing_section():
+    """Referencing a heading that doesn't exist shows a 'not found' message."""
+    content = "![[note2#NonexistentSection]]\n"
+    processed, _, _ = process_markdown(content, FIXTURES / "note1.md", FIXTURES)
+    assert "Section not found" in processed
+
+
+def test_ambiguous_filename_resolution(tmp_path):
+    """When multiple files match, the shortest path (closest to root) wins."""
+    (tmp_path / "target.md").write_text("root version\n")
+    sub = tmp_path / "a" / "b"
+    sub.mkdir(parents=True)
+    (sub / "target.md").write_text("deep version\n")
+
+    content = "![[target]]\n"
+    processed, _, _ = process_markdown(content, tmp_path / "main.md", tmp_path)
+    assert "root version" in processed
