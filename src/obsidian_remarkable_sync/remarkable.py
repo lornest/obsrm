@@ -74,6 +74,22 @@ class RemarkableClient:
             if line.strip()
         ]
 
+    def is_folder_empty(self, remote_path: str) -> bool:
+        """Check if a folder on reMarkable is empty."""
+        try:
+            entries = self.list_folder(remote_path)
+            return len(entries) == 0
+        except RmapiError:
+            return False
+
+    def delete_folder(self, remote_path: str) -> None:
+        """Delete an empty folder from reMarkable."""
+        try:
+            self._run("rm", remote_path)
+            logger.info("Deleted empty folder %s", remote_path)
+        except RmapiError as e:
+            logger.warning("Failed to delete folder %s: %s", remote_path, e)
+
     def replace(self, local_path: Path, remote_path: str) -> None:
         """Replace a document on reMarkable.
 

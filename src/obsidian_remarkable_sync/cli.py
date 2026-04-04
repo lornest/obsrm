@@ -164,6 +164,12 @@ def sync(
             if i < len(changeset.deleted):
                 time.sleep(RMAPI_DELAY)
 
+        # Clean up empty folders after deletions
+        if changeset.deleted:
+            _cleanup_empty_folders(
+                changeset.deleted, state, config.remarkable.target_folder, client
+            )
+
     except (KeyboardInterrupt, Exception) as e:
         click.echo(f"\n\nInterrupted: {e}" if not isinstance(e, KeyboardInterrupt) else "\n\nInterrupted by user.", err=True)
         click.echo(f"Progress saved: {done} files synced before interruption.", err=True)
@@ -176,6 +182,51 @@ def sync(
         sys.exit(1)
     else:
         click.echo(f"Sync complete: {done} files processed.")
+
+
+@cli.command()
+def _cleanup_empty_folders(
+    deleted_paths: list[str],
+    state: SyncState,
+    target_folder: str,
+    client: RemarkableClient,
+) -> None:
+    """Remove empty folders on reMarkable after file deletions.
+
+    Walks from the deleted files' parent folders up toward target_folder,
+    removing any that are empty. Processes deepest folders first.
+    """
+    # Collect all parent folders from deleted files' remote paths
+    folders_to_check: set[str] = set()
+    for rel_path in deleted_paths:
+        # Build the remote path from the rel_path
+        parts = rel_path.rsplit("/", 1)
+        if len(parts) > 1:
+            # File was in a subfolder
+            folder = f"{target_folder}/{parts[0]}"
+            folders_to_check.add(folder)
+
+    if not folders_to_check:
+        return
+
+    # Sort deepest first so children are removed before parents
+    sorted_folders = sorted(folders_to_check, key=lambda f: f.count("/"), reverse=True)
+
+    checked: set[str] = set()
+    for folder in sorted_folders:
+        # Walk up the tree
+        current = folder
+        while current and current != target_folder and current not in checked:
+            checked.add(current)
+            if client.is_folder_empty(current):
+                click.echo(f"  Removing empty folder: {current}")
+                client.delete_folder(current)
+                time.sleep(RMAPI_DELAY)
+                # Move up to parent
+                parent = current.rsplit("/", 1)[0]
+                current = parent if parent != current else ""
+            else:
+                break
 
 
 @cli.command()
