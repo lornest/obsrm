@@ -167,7 +167,7 @@ def sync(
         # Clean up empty folders after deletions
         if changeset.deleted:
             _cleanup_empty_folders(
-                changeset.deleted, state, config.remarkable.target_folder, client
+                changeset.deleted, config.remarkable.target_folder, client
             )
 
     except (KeyboardInterrupt, Exception) as e:
@@ -184,10 +184,8 @@ def sync(
         click.echo(f"Sync complete: {done} files processed.")
 
 
-@cli.command()
 def _cleanup_empty_folders(
     deleted_paths: list[str],
-    state: SyncState,
     target_folder: str,
     client: RemarkableClient,
 ) -> None:
