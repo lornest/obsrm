@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock
 
-from obsidian_remarkable_sync.cli import _cleanup_empty_folders
+from obsrm.cli import _cleanup_empty_folders
 
 
 def _make_mock_client(folder_contents: dict[str, list[str]]):

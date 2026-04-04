@@ -1,4 +1,4 @@
-"""Configuration loading for obsidian-remarkable-sync."""
+"""Configuration loading for obsrm."""
 
 import os
 from pathlib import Path

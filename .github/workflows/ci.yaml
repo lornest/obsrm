@@ -33,4 +33,4 @@ jobs:
         run: uv run --extra dev pytest -v
 
       - name: Dry-run sync against fixture vault
-        run: uv run --extra dev obsidian-remarkable-sync sync --vault-path tests/fixtures/sample_vault --dry-run
+        run: uv run --extra dev obsrm sync --vault-path tests/fixtures/sample_vault --dry-run

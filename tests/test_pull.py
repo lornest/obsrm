@@ -3,13 +3,13 @@
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from obsidian_remarkable_sync.pull import (
+from obsrm.pull import (
     _append_annotation_link,
     _handle_pdf,
     list_remote_files,
     remote_path_to_vault_rel,
 )
-from obsidian_remarkable_sync.sync_state import SyncState
+from obsrm.sync_state import SyncState
 
 # --- remote_path_to_vault_rel ---
 
@@ -194,7 +194,7 @@ def test_append_annotation_section_without_embed(tmp_path):
 
 
 def test_append_annotation_text_no_trailing_newline(tmp_path):
-    from obsidian_remarkable_sync.pull import _append_annotation_text
+    from obsrm.pull import _append_annotation_text
 
     md_path = tmp_path / "Note.md"
     md_path.write_text("# Note\n\nContent")  # no trailing \n
@@ -207,7 +207,7 @@ def test_append_annotation_text_no_trailing_newline(tmp_path):
 
 
 def test_append_annotation_text_idempotent(tmp_path):
-    from obsidian_remarkable_sync.pull import _append_annotation_text
+    from obsrm.pull import _append_annotation_text
 
     md_path = tmp_path / "Note.md"
     md_path.write_text("# Note\n")

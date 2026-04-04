@@ -1,4 +1,4 @@
-# obsidian-remarkable-sync
+# obsrm
 
 Bidirectional sync between an Obsidian vault and a reMarkable tablet. Pushes markdown notes as ePub/PDF (preserving wikilinks, callouts, embeds, images) and pulls notebooks/handwritten notes back as markdown. Runs locally via CLI or automatically via GitHub Actions.
 
@@ -29,36 +29,36 @@ brew install pandoc uv
 # Download rmapi from https://github.com/ddvk/rmapi/releases
 
 # Clone and install
-git clone <repo-url> && cd obsidian-remarkable-sync
+git clone <repo-url> && cd obsrm
 uv sync
 
 # Authenticate with reMarkable Cloud
-uv run obsidian-remarkable-sync auth
+uv run obsrm auth
 
 # Preview what would be synced
-uv run obsidian-remarkable-sync sync --vault-path ~/my-vault --dry-run
+uv run obsrm sync --vault-path ~/my-vault --dry-run
 
 # Sync for real
-uv run obsidian-remarkable-sync sync --vault-path ~/my-vault
+uv run obsrm sync --vault-path ~/my-vault
 ```
 
 ## CLI commands
 
 ```
-obsidian-remarkable-sync sync [OPTIONS]    Bidirectional sync (push then pull)
+obsrm sync [OPTIONS]    Bidirectional sync (push then pull)
   --vault-path PATH    Path to Obsidian vault (default: current dir)
   --config PATH        Path to sync-config.yaml
   --dry-run            Show what would change without syncing
   --force              Re-sync all files regardless of state
   -v, --verbose        Debug logging
 
-obsidian-remarkable-sync pull [OPTIONS]    Pull-only (reMarkable -> Obsidian)
+obsrm pull [OPTIONS]    Pull-only (reMarkable -> Obsidian)
   --vault-path PATH    Path to Obsidian vault (default: current dir)
   --config PATH        Path to sync-config.yaml
   --dry-run            Show what would be pulled without doing it
 
-obsidian-remarkable-sync auth              Set up reMarkable Cloud auth
-obsidian-remarkable-sync status [OPTIONS]  Show sync state and pending changes
+obsrm auth              Set up reMarkable Cloud auth
+obsrm status [OPTIONS]  Show sync state and pending changes
 ```
 
 ## Configuration
@@ -102,7 +102,7 @@ All settings have sensible defaults. The config file is optional.
 
 Push-to-sync: changes to `.md` files or config on `main` automatically sync to your reMarkable.
 
-1. Run `uv run obsidian-remarkable-sync auth` locally
+1. Run `uv run obsrm auth` locally
 2. Add contents of `~/.rmapi/rmapi.conf` as GitHub secret `RMAPI_CONFIG`
 3. Copy [`examples/sync-remarkable.yaml`](examples/sync-remarkable.yaml) to `.github/workflows/` in your vault repo
 
@@ -113,7 +113,7 @@ See [SETUP.md](SETUP.md) for detailed instructions.
 ## Architecture
 
 ```
-src/obsidian_remarkable_sync/
+src/obsrm/
   cli.py                 Click CLI entry point (sync, pull, status, auth)
   config.py              YAML config + pydantic validation
   vault.py               Vault scanning with include/exclude globs

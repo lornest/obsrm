@@ -81,7 +81,7 @@ wheels = [
 ]
 
 [[package]]
-name = "obsidian-remarkable-sync"
+name = "obsrm"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

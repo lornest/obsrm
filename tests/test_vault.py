@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from obsidian_remarkable_sync.vault import resolve_remote_path, scan_vault
+from obsrm.vault import resolve_remote_path, scan_vault
 
 FIXTURES = Path(__file__).parent / "fixtures" / "sample_vault"
 

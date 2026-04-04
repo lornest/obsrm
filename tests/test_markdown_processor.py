@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from obsidian_remarkable_sync.markdown_processor import process_markdown
+from obsrm.markdown_processor import process_markdown
 
 FIXTURES = Path(__file__).parent / "fixtures" / "sample_vault"
 
@@ -122,7 +122,7 @@ def test_full_note_with_images():
 
 def test_recursion_limit():
     """Embeds nested deeper than 10 levels stop resolving."""
-    from obsidian_remarkable_sync.markdown_processor import _resolve_embeds
+    from obsrm.markdown_processor import _resolve_embeds
 
     # depth=11 should return content unchanged
     content = "![[note2]]\n"

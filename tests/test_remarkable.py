@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
-from obsidian_remarkable_sync.remarkable import RemarkableClient, RmapiError
+from obsrm.remarkable import RemarkableClient, RmapiError
 
 
 @pytest.fixture

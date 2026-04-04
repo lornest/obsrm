@@ -34,14 +34,14 @@ sudo apt-get install pandoc
 
 ```bash
 git clone <your-repo-url>
-cd obsidian-remarkable-sync
+cd obsrm
 uv sync
 ```
 
 ### 2. Authenticate with reMarkable Cloud
 
 ```bash
-uv run obsidian-remarkable-sync auth
+uv run obsrm auth
 ```
 
 This runs `rmapi` which will prompt you to:
@@ -80,16 +80,16 @@ If no config file exists, defaults are used (all `.md` files, excluding `.obsidi
 
 ```bash
 # Preview what would be synced
-uv run obsidian-remarkable-sync sync --vault-path ~/path/to/vault --dry-run
+uv run obsrm sync --vault-path ~/path/to/vault --dry-run
 
 # Sync for real
-uv run obsidian-remarkable-sync sync --vault-path ~/path/to/vault
+uv run obsrm sync --vault-path ~/path/to/vault
 
 # Force re-sync everything
-uv run obsidian-remarkable-sync sync --vault-path ~/path/to/vault --force
+uv run obsrm sync --vault-path ~/path/to/vault --force
 
 # Check current sync status
-uv run obsidian-remarkable-sync status --vault-path ~/path/to/vault
+uv run obsrm status --vault-path ~/path/to/vault
 ```
 
 ## GitHub Actions Setup
@@ -145,7 +145,7 @@ Remove the variable or set it to `true` to re-enable.
 
 reMarkable device tokens can expire. If syncing fails with an authentication error:
 
-1. Re-run `uv run obsidian-remarkable-sync auth` locally
+1. Re-run `uv run obsrm auth` locally
 2. Update the `RMAPI_CONFIG` secret in GitHub with the new `~/.rmapi/rmapi.conf` contents
 
 ## Environment Variables

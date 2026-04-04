@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from obsidian_remarkable_sync.converter import ConversionError, convert_file
+from obsrm.converter import ConversionError, convert_file
 
 FIXTURES = Path(__file__).parent / "fixtures" / "sample_vault"
 

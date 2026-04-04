@@ -3,7 +3,7 @@
 import tempfile
 from pathlib import Path
 
-from obsidian_remarkable_sync.sync_state import SyncState
+from obsrm.sync_state import SyncState
 
 
 def test_empty_state():

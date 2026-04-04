@@ -67,11 +67,11 @@ jobs:
           fi
           echo "flags=$FLAGS" >> "$GITHUB_OUTPUT"
 
-      - name: Install obsidian-remarkable-sync
-        run: uv pip install git+https://github.com/lornest/obsidian-remarkable-sync.git
+      - name: Install obsrm
+        run: uv pip install git+https://github.com/lornest/obsrm.git
 
       - name: Run sync
-        run: uv run obsidian-remarkable-sync sync --vault-path . ${{ steps.flags.outputs.flags }}
+        run: uv run obsrm sync --vault-path . ${{ steps.flags.outputs.flags }}
 
       - name: Commit updated sync state
         if: ${{ inputs.dry_run != 'true' }}

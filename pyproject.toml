@@ -3,7 +3,7 @@ requires = ["setuptools>=68.0", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "obsidian-remarkable-sync"
+name = "obsrm"
 version = "0.1.0"
 description = "Sync an Obsidian vault to a reMarkable tablet"
 requires-python = ">=3.14"
@@ -23,7 +23,7 @@ dev = [
 ]
 
 [project.scripts]
-obsidian-remarkable-sync = "obsidian_remarkable_sync.cli:cli"
+obsrm = "obsrm.cli:cli"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -33,7 +33,7 @@ testpaths = ["tests"]
 pythonpath = ["src"]
 
 [tool.coverage.run]
-source = ["obsidian_remarkable_sync"]
+source = ["obsrm"]
 
 [tool.coverage.report]
 show_missing = true

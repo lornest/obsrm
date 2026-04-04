@@ -1,6 +1,6 @@
 """Tests for config loading and environment variable overrides."""
 
-from obsidian_remarkable_sync.config import load_config
+from obsrm.config import load_config
 
 
 def test_defaults_when_no_config_file(tmp_path):

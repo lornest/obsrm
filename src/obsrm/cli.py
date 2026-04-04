@@ -1,4 +1,4 @@
-"""CLI entry point for obsidian-remarkable-sync."""
+"""CLI entry point for obsrm."""
 
 import logging
 import os
@@ -11,11 +11,11 @@ from pathlib import Path
 
 import click
 
-from obsidian_remarkable_sync.config import Config, load_config
-from obsidian_remarkable_sync.converter import ConversionError, convert_file
-from obsidian_remarkable_sync.remarkable import RemarkableClient, RmapiError
-from obsidian_remarkable_sync.sync_state import Changeset, FileEntry, SyncState
-from obsidian_remarkable_sync.vault import resolve_remote_path, scan_vault
+from obsrm.config import Config, load_config
+from obsrm.converter import ConversionError, convert_file
+from obsrm.remarkable import RemarkableClient, RmapiError
+from obsrm.sync_state import Changeset, FileEntry, SyncState
+from obsrm.vault import resolve_remote_path, scan_vault
 
 logger = logging.getLogger(__name__)
 
@@ -143,8 +143,8 @@ def _run_pull(
     Returns (pulled, errors, deleted, re_push_rel_paths).
     re_push_rel_paths: push-origin files deleted on reMarkable that still exist locally.
     """
-    from obsidian_remarkable_sync.pull import pull_file, remote_path_to_vault_rel
-    from obsidian_remarkable_sync.vault import _hash_file
+    from obsrm.pull import pull_file, remote_path_to_vault_rel
+    from obsrm.vault import _hash_file
 
     known_remotes = state.known_remote_paths()
 
@@ -284,7 +284,7 @@ def sync(
     force: bool,
 ) -> None:
     """Bidirectional sync: push local changes, then pull remote changes."""
-    from obsidian_remarkable_sync.pull import list_remote_files
+    from obsrm.pull import list_remote_files
 
     vault_path = _resolve_vault_path(vault_path)
     config = load_config(vault_path, config_path)
@@ -515,7 +515,7 @@ def pull(
     dry_run: bool,
 ) -> None:
     """Pull new/changed files from reMarkable to the vault."""
-    from obsidian_remarkable_sync.pull import list_remote_files
+    from obsrm.pull import list_remote_files
 
     vault_path = _resolve_vault_path(vault_path)
     config = load_config(vault_path, config_path)

@@ -8,7 +8,7 @@ import pytest
 
 rmscene = pytest.importorskip("rmscene", reason="rmscene not installed")
 
-from obsidian_remarkable_sync.rm_extract import (  # noqa: E402
+from obsrm.rm_extract import (  # noqa: E402
     _extract_page_text,
     extract_text_from_rmdoc,
     pages_to_markdown,
@@ -206,7 +206,7 @@ def test_extract_text_from_rmdoc_sorts_pages(tmp_path):
         return original_extract(f)
 
     with patch(
-        "obsidian_remarkable_sync.rm_extract._extract_page_text",
+        "obsrm.rm_extract._extract_page_text",
         side_effect=tracking_extract,
     ):
         extract_text_from_rmdoc(rmdoc)

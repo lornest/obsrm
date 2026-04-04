@@ -5,7 +5,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from obsidian_remarkable_sync.markdown_processor import process_markdown
+from obsrm.markdown_processor import process_markdown
 
 
 class ConversionError(Exception):
