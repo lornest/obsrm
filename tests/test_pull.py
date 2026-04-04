@@ -141,3 +141,62 @@ def test_pull_detects_all_when_no_state(tmp_path):
 
     new_files = [p for p in remote_files if p not in known]
     assert len(new_files) == 2
+
+
+# --- _append_annotation_link edge cases ---
+
+
+def test_append_annotation_no_trailing_newline(tmp_path):
+    """File without trailing newline should get one added before annotation."""
+    md_path = tmp_path / "Note.md"
+    md_path.write_text("# Note\n\nContent without newline")  # no trailing \n
+
+    pdf_rel = Path("attachments/Note.pdf")
+    _append_annotation_link(md_path, pdf_rel)
+
+    content = md_path.read_text()
+    assert "## Annotations" in content
+    assert "![[attachments/Note.pdf]]" in content
+    # Verify a newline was added before the annotations section
+    assert "\n\n## Annotations" in content
+
+
+def test_append_annotation_section_without_embed(tmp_path):
+    """Annotations section exists but has no embed — should append."""
+    md_path = tmp_path / "Note.md"
+    md_path.write_text("# Note\n\n## Annotations\n\nSome text\n")
+
+    pdf_rel = Path("attachments/Note.pdf")
+    _append_annotation_link(md_path, pdf_rel)
+
+    content = md_path.read_text()
+    assert "![[attachments/Note.pdf]]" in content
+
+
+# --- _append_annotation_text edge cases ---
+
+
+def test_append_annotation_text_no_trailing_newline(tmp_path):
+    from obsidian_remarkable_sync.pull import _append_annotation_text
+
+    md_path = tmp_path / "Note.md"
+    md_path.write_text("# Note\n\nContent")  # no trailing \n
+
+    _append_annotation_text(md_path, "New text from tablet")
+
+    content = md_path.read_text()
+    assert "## From reMarkable" in content
+    assert "New text from tablet" in content
+
+
+def test_append_annotation_text_idempotent(tmp_path):
+    from obsidian_remarkable_sync.pull import _append_annotation_text
+
+    md_path = tmp_path / "Note.md"
+    md_path.write_text("# Note\n")
+
+    _append_annotation_text(md_path, "Text")
+    _append_annotation_text(md_path, "Text")
+
+    content = md_path.read_text()
+    assert content.count("Text") == 1

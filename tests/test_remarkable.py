@@ -221,3 +221,52 @@ def test_download_raises_when_file_not_found(client, tmp_path):
         pytest.raises(RmapiError, match="Could not find"),
     ):
         client.download("/Obsidian/ghost", tmp_path)
+
+
+def test_stat_parses_metadata(client):
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout=(
+                "{\n"
+                '  "ID": "abc-123",\n'
+                '  "Name": "Test Note",\n'
+                '  "Version": 0,\n'
+                '  "ModifiedClient": "2026-04-04T13:47:18Z",\n'
+                '  "Type": "DocumentType",\n'
+                "}\n"
+            ),
+            stderr="",
+        )
+        result = client.stat("/Obsidian/Test Note")
+        assert result["ID"] == "abc-123"
+        assert result["ModifiedClient"] == "2026-04-04T13:47:18Z"
+        assert result["Name"] == "Test Note"
+        assert result["Type"] == "DocumentType"
+
+
+def test_stat_raises_on_failure(client):
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=1, stdout="", stderr="not found"
+        )
+        with pytest.raises(RmapiError):
+            client.stat("/Obsidian/missing")
+
+
+def test_delete_folder_logs_warning_on_failure(client):
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=1, stdout="", stderr="not empty"
+        )
+        # Should not raise
+        client.delete_folder("/Obsidian/notempty")
+
+
+def test_delete_folder_succeeds(client):
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="", stderr=""
+        )
+        client.delete_folder("/Obsidian/empty")

@@ -179,7 +179,10 @@ class RemarkableClient:
         for line in result.stdout.splitlines():
             if ":" in line:
                 key, _, value = line.partition(":")
-                metadata[key.strip().strip('"')] = value.strip().strip('"')
+                key = key.strip().strip('"')
+                value = value.strip().rstrip(",").strip().strip('"')
+                if key:
+                    metadata[key] = value
         return metadata
 
     def replace(self, local_path: Path, remote_path: str) -> None:
