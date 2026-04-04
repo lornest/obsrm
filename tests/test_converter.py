@@ -15,6 +15,11 @@ requires_pandoc = pytest.mark.skipif(
     reason="Pandoc is not installed",
 )
 
+requires_latex = pytest.mark.skipif(
+    shutil.which("pdflatex") is None,
+    reason="pdflatex is not installed",
+)
+
 
 @requires_pandoc
 def test_convert_simple_note_to_epub():
@@ -35,6 +40,7 @@ def test_convert_note_with_images_to_epub():
 
 
 @requires_pandoc
+@requires_latex
 def test_convert_to_pdf():
     output_dir = Path(tempfile.mkdtemp(prefix="test-convert-"))
     result = convert_file(FIXTURES / "note2.md", FIXTURES, "pdf", output_dir)
