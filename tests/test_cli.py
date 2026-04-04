@@ -255,9 +255,7 @@ def test_pull_failure_continues(mock_client_cls, runner, vault):
     mock_client_cls.return_value = mock_client
     mock_client.list_recursive.return_value = {"/Test/Bad": "f"}
 
-    with patch(
-        "obsrm.pull.pull_file", side_effect=RmapiError("download failed")
-    ):
+    with patch("obsrm.pull.pull_file", side_effect=RmapiError("download failed")):
         result = runner.invoke(cli, ["pull", "--vault-path", str(vault)])
 
     assert result.exit_code == 1
