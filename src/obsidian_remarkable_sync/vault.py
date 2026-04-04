@@ -47,9 +47,7 @@ def scan_vault(
     return result
 
 
-def resolve_remote_path(
-    rel_path: str, target_folder: str, flatten: bool
-) -> str:
+def resolve_remote_path(rel_path: str, target_folder: str, flatten: bool) -> str:
     """Compute the remote path on reMarkable for a given vault file.
 
     Args:

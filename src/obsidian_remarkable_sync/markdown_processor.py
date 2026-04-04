@@ -68,9 +68,7 @@ def _strip_dataview_blocks(content: str) -> str:
     )
 
 
-def _resolve_embeds(
-    content: str, vault_path: Path, seen: set[str], depth: int = 0
-) -> str:
+def _resolve_embeds(content: str, vault_path: Path, seen: set[str], depth: int = 0) -> str:
     """Resolve ![[note]] transclusions by inlining referenced note content.
 
     Cycle detection via `seen` set. Max depth of 10 to prevent runaway recursion.
@@ -114,9 +112,7 @@ def _resolve_embeds(
             embedded_content = _extract_section(embedded_content, heading)
 
         # Recursively resolve embeds in the inlined content
-        embedded_content = _resolve_embeds(
-            embedded_content, vault_path, seen, depth + 1
-        )
+        embedded_content = _resolve_embeds(embedded_content, vault_path, seen, depth + 1)
         seen.discard(rel)
 
         return embedded_content
@@ -225,7 +221,13 @@ def _is_image_ref(ref: str) -> bool:
     # Strip size suffix
     name = ref.rsplit("|", 1)[0].strip()
     return Path(name).suffix.lower() in {
-        ".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp",
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".gif",
+        ".webp",
+        ".svg",
+        ".bmp",
     }
 
 

@@ -66,9 +66,7 @@ def sync(
 
     # Scan vault
     click.echo("Scanning vault...")
-    current_files = scan_vault(
-        vault_path, config.vault.include, config.vault.exclude
-    )
+    current_files = scan_vault(vault_path, config.vault.include, config.vault.exclude)
     click.echo(f"Found {len(current_files)} files")
 
     # Compute changeset
@@ -78,9 +76,7 @@ def sync(
     if force:
         changeset = Changeset(added=list(current_files.keys()))
     else:
-        changeset = state.compute_changeset(
-            current_files, config.sync.delete_removed
-        )
+        changeset = state.compute_changeset(current_files, config.sync.delete_removed)
 
     click.echo(f"Changes: {changeset.summary()}")
 
@@ -166,12 +162,13 @@ def sync(
 
         # Clean up empty folders after deletions
         if changeset.deleted:
-            _cleanup_empty_folders(
-                changeset.deleted, config.remarkable.target_folder, client
-            )
+            _cleanup_empty_folders(changeset.deleted, config.remarkable.target_folder, client)
 
     except (KeyboardInterrupt, Exception) as e:
-        click.echo(f"\n\nInterrupted: {e}" if not isinstance(e, KeyboardInterrupt) else "\n\nInterrupted by user.", err=True)
+        if isinstance(e, KeyboardInterrupt):
+            click.echo("\n\nInterrupted by user.", err=True)
+        else:
+            click.echo(f"\n\nInterrupted: {e}", err=True)
         click.echo(f"Progress saved: {done} files synced before interruption.", err=True)
         sys.exit(1)
 
@@ -233,13 +230,128 @@ def _cleanup_empty_folders(
 
 
 @cli.command()
+@click.option(
+    "--vault-path",
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    default=None,
+    help="Path to the Obsidian vault. Defaults to current directory.",
+)
+@click.option(
+    "--config",
+    "config_path",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    default=None,
+    help="Path to sync-config.yaml.",
+)
+@click.option("--dry-run", is_flag=True, help="Show what would be pulled without doing it.")
+def pull(
+    vault_path: Path | None,
+    config_path: Path | None,
+    dry_run: bool,
+) -> None:
+    """Pull new/changed files from reMarkable to the vault.
+
+    Detects files on reMarkable that were NOT pushed from Obsidian
+    (i.e. not in .sync-state.json) and downloads them as annotated PDFs
+    embedded in markdown files.
+    """
+    from obsidian_remarkable_sync.pull import list_remote_files, pull_file, remote_path_to_vault_rel
+
+    vault_path = _resolve_vault_path(vault_path)
+    config = load_config(vault_path, config_path)
+
+    click.echo(f"Vault: {vault_path}")
+    click.echo(f"Source: {config.remarkable.target_folder}")
+    click.echo(f"Attachments: {config.pull.attachments_folder}")
+
+    # Initialize reMarkable client
+    try:
+        client = RemarkableClient()
+    except RmapiError as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+    # List remote files
+    click.echo("Listing remote files...")
+    remote_files = list_remote_files(client, config.remarkable.target_folder)
+    click.echo(f"Found {len(remote_files)} files on reMarkable")
+
+    # Find files not in sync state (i.e. not pushed from Obsidian)
+    state_file = vault_path / config.sync.state_file
+    state = SyncState(state_file)
+    known_remotes = state.known_remote_paths()
+
+    new_files = [path for path in remote_files if path not in known_remotes]
+
+    if not new_files:
+        click.echo("Nothing to pull — all remote files are already tracked.")
+        return
+
+    click.echo(f"New files to pull: {len(new_files)}")
+
+    if dry_run:
+        for path in new_files:
+            rel = remote_path_to_vault_rel(path, config.remarkable.target_folder)
+            click.echo(f"  + {rel}")
+        click.echo("(dry run -- no changes made)")
+        return
+
+    errors = 0
+    done = 0
+
+    try:
+        for i, remote_path in enumerate(new_files, 1):
+            rel = remote_path_to_vault_rel(remote_path, config.remarkable.target_folder)
+            click.echo(f"[{i}/{len(new_files)}] {rel}")
+            try:
+                md_path, att_path = pull_file(
+                    client,
+                    remote_path,
+                    vault_path,
+                    config.remarkable.target_folder,
+                    config.pull.attachments_folder,
+                )
+            except (RmapiError, OSError) as e:
+                click.echo(f"  Pull failed: {e}", err=True)
+                errors += 1
+                continue
+
+            # Track in sync state with real content hash so push sync
+            # doesn't re-upload the file we just created
+            from obsidian_remarkable_sync.vault import _hash_file
+
+            rel_local = md_path.relative_to(vault_path).as_posix()
+            content_hash = _hash_file(md_path)
+            state.update_entry(rel_local, content_hash, remote_path)
+            state.save()
+            done += 1
+            click.echo(f"  -> {rel_local}")
+
+            if i < len(new_files):
+                time.sleep(RMAPI_DELAY)
+
+    except (KeyboardInterrupt, Exception) as e:
+        if isinstance(e, KeyboardInterrupt):
+            click.echo("\n\nInterrupted by user.", err=True)
+        else:
+            click.echo(f"\n\nInterrupted: {e}", err=True)
+        click.echo(f"Progress saved: {done} files pulled before interruption.", err=True)
+        sys.exit(1)
+
+    if errors:
+        click.echo(f"\nCompleted: {done} succeeded, {errors} failed.", err=True)
+        sys.exit(1)
+    else:
+        click.echo(f"\nPull complete: {done} files pulled.")
+
+
+@cli.command()
 def auth() -> None:
     """Set up reMarkable Cloud authentication via rmapi."""
     rmapi = shutil.which("rmapi")
     if rmapi is None:
         click.echo(
-            "rmapi is not installed. "
-            "Install from https://github.com/ddvk/rmapi/releases",
+            "rmapi is not installed. Install from https://github.com/ddvk/rmapi/releases",
             err=True,
         )
         sys.exit(1)
@@ -295,12 +407,8 @@ def status(vault_path: Path | None, config_path: Path | None) -> None:
         click.echo(f"  {entry.rel_path} -> {entry.remote_path}")
 
     # Show pending changes
-    current_files = scan_vault(
-        vault_path, config.vault.include, config.vault.exclude
-    )
-    changeset = state.compute_changeset(
-        current_files, config.sync.delete_removed
-    )
+    current_files = scan_vault(vault_path, config.vault.include, config.vault.exclude)
+    changeset = state.compute_changeset(current_files, config.sync.delete_removed)
     if changeset.has_changes:
         click.echo(f"\nPending changes: {changeset.summary()}")
         _print_changeset(changeset)

@@ -11,6 +11,8 @@ dependencies = [
     "click>=8.1",
     "pydantic>=2.0",
     "pyyaml>=6.0",
+    "rmscene>=0.6",
+    "rmc>=0.3",
 ]
 
 [project.optional-dependencies]
@@ -27,3 +29,18 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "I",     # isort
+    "UP",    # pyupgrade
+    "B",     # flake8-bugbear
+    "SIM",   # flake8-simplify
+]

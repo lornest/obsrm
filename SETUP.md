@@ -122,7 +122,7 @@ usertoken: <long-token-string>
 
 ### 3. Add the workflow files
 
-Copy `.github/workflows/sync.yaml` and `.github/workflows/ci.yaml` to your vault repository.
+Copy `examples/sync-remarkable.yaml` from this repo to `.github/workflows/` in your vault repository. Adjust the `--vault-path` if your vault is in a subdirectory.
 
 The sync workflow will:
 - Trigger on pushes to `main` that change `.md` files or `sync-config.yaml`
@@ -130,7 +130,7 @@ The sync workflow will:
 - Commit the updated `.sync-state.json` back to the repo
 - Can also be triggered manually via the Actions tab (with force/dry-run options)
 
-The CI workflow runs tests on PRs.
+The CI workflow in this tool's repo runs tests — you don't need it in your vault repo.
 
 ### 4. Disable syncing (optional)
 

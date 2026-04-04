@@ -19,9 +19,7 @@ requires_pandoc = pytest.mark.skipif(
 @requires_pandoc
 def test_convert_simple_note_to_epub():
     output_dir = Path(tempfile.mkdtemp(prefix="test-convert-"))
-    result = convert_file(
-        FIXTURES / "note2.md", FIXTURES, "epub", output_dir
-    )
+    result = convert_file(FIXTURES / "note2.md", FIXTURES, "epub", output_dir)
     assert result.exists()
     assert result.suffix == ".epub"
     assert result.stat().st_size > 0
@@ -30,9 +28,7 @@ def test_convert_simple_note_to_epub():
 @requires_pandoc
 def test_convert_note_with_images_to_epub():
     output_dir = Path(tempfile.mkdtemp(prefix="test-convert-"))
-    result = convert_file(
-        FIXTURES / "note_with_images.md", FIXTURES, "epub", output_dir
-    )
+    result = convert_file(FIXTURES / "note_with_images.md", FIXTURES, "epub", output_dir)
     assert result.exists()
     assert result.suffix == ".epub"
     assert result.stat().st_size > 0
@@ -41,9 +37,7 @@ def test_convert_note_with_images_to_epub():
 @requires_pandoc
 def test_convert_to_pdf():
     output_dir = Path(tempfile.mkdtemp(prefix="test-convert-"))
-    result = convert_file(
-        FIXTURES / "note2.md", FIXTURES, "pdf", output_dir
-    )
+    result = convert_file(FIXTURES / "note2.md", FIXTURES, "pdf", output_dir)
     assert result.exists()
     assert result.suffix == ".pdf"
 
@@ -51,9 +45,7 @@ def test_convert_to_pdf():
 @requires_pandoc
 def test_convert_uses_title_from_frontmatter():
     output_dir = Path(tempfile.mkdtemp(prefix="test-convert-"))
-    result = convert_file(
-        FIXTURES / "note2.md", FIXTURES, "epub", output_dir
-    )
+    result = convert_file(FIXTURES / "note2.md", FIXTURES, "epub", output_dir)
     # The output file should exist — title is passed as metadata to Pandoc
     assert result.exists()
 

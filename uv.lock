@@ -49,6 +49,8 @@ dependencies = [
     { name = "click" },
     { name = "pydantic" },
     { name = "pyyaml" },
+    { name = "rmc" },
+    { name = "rmscene" },
 ]
 
 [package.optional-dependencies]
@@ -64,16 +66,18 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "pytest-tmp-files", marker = "extra == 'dev'", specifier = ">=0.0.2" },
     { name = "pyyaml", specifier = ">=6.0" },
+    { name = "rmc", specifier = ">=0.3" },
+    { name = "rmscene", specifier = ">=0.6" },
 ]
 provides-extras = ["dev"]
 
 [[package]]
 name = "packaging"
-version = "26.0"
+version = "23.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/65/ee/299d360cdc32edc7d2cf530f3accf79c4fca01e96ffc950d8a52213bd8e4/packaging-26.0.tar.gz", hash = "sha256:00243ae351a257117b6a241061796684b084ed1c516a08c48a3f7e147a9d80b4", size = 143416, upload-time = "2026-01-21T20:50:39.064Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fb/2b/9b9c33ffed44ee921d0967086d653047286054117d584f1b1a7c22ceaf7b/packaging-23.2.tar.gz", hash = "sha256:048fb0e9405036518eaaf48a55953c750c11e1a1b68e0dd1a9d62ed0c092cfc5", size = 146714, upload-time = "2023-10-01T13:50:05.279Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b7/b9/c538f279a4e237a006a2c98387d081e9eb060d203d8ed34467cc0f0b9b53/packaging-26.0-py3-none-any.whl", hash = "sha256:b36f1fef9334a5588b4166f8bcd26a14e521f2b55e6b9de3aaa80d3ff7a37529", size = 74366, upload-time = "2026-01-21T20:50:37.788Z" },
+    { url = "https://files.pythonhosted.org/packages/ec/1a/610693ac4ee14fcdf2d9bf3c493370e4f2ef7ae2e19217d7a237ff42367d/packaging-23.2-py3-none-any.whl", hash = "sha256:8c491190033a9af7e1d931d0b5dacc2ef47509b34dd0de67ed209b5203fc88c7", size = 53011, upload-time = "2023-10-01T13:50:03.745Z" },
 ]
 
 [[package]]
@@ -213,6 +217,31 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/da/92/1446574745d74df0c92e6aa4a7b0b3130706a4142b2d1a5869f2eaa423c6/pyyaml-6.0.3-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:16249ee61e95f858e83976573de0f5b2893b3677ba71c9dd36b9cf8be9ac6d65", size = 829923, upload-time = "2025-09-25T21:32:54.537Z" },
     { url = "https://files.pythonhosted.org/packages/f0/7a/1c7270340330e575b92f397352af856a8c06f230aa3e76f86b39d01b416a/pyyaml-6.0.3-cp314-cp314t-win_amd64.whl", hash = "sha256:4ad1906908f2f5ae4e5a8ddfce73c320c2a1429ec52eafd27138b7f1cbe341c9", size = 174062, upload-time = "2025-09-25T21:32:55.767Z" },
     { url = "https://files.pythonhosted.org/packages/f1/12/de94a39c2ef588c7e6455cfbe7343d3b2dc9d6b6b2f40c4c6565744c873d/pyyaml-6.0.3-cp314-cp314t-win_arm64.whl", hash = "sha256:ebc55a14a21cb14062aa4162f906cd962b28e2e9ea38f9b4391244cd8de4ae0b", size = 149341, upload-time = "2025-09-25T21:32:56.828Z" },
+]
+
+[[package]]
+name = "rmc"
+version = "0.3.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "rmscene" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f0/00/5e05be08e8905f888ece9e5835b96e4ec3aabb480cce564c4ec5e5e0ca32/rmc-0.3.0.tar.gz", hash = "sha256:57afe14d56694085b6a382aa2b93b7b86eb21e93e720b16a82990aa0d6513dcb", size = 10799, upload-time = "2025-03-21T08:04:46.362Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a8/b0/486783b0321557d4294195e73e10b58dc5b5e1ac8519791c48160f863097/rmc-0.3.0-py3-none-any.whl", hash = "sha256:f2957bf08c48902bf50b047ee08aeb0be5a8c0a64bf7a1a46e23ae02c0c75780", size = 12626, upload-time = "2025-03-21T08:04:45.074Z" },
+]
+
+[[package]]
+name = "rmscene"
+version = "0.6.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "packaging" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/92/27/bb1c99959216af939ade7b5b470d049cfa368a179a2c021153e93a922c5a/rmscene-0.6.1.tar.gz", hash = "sha256:82f7797bdfa407f9ad27245e7333a7c6e81f8da3390a4f9d9d89736643fe163c", size = 22790, upload-time = "2024-12-03T21:21:57.361Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b2/77/4de4d4e0203d83288d33b4e448aafbe9aff6fe4deeb344f28c1cca901b98/rmscene-0.6.1-py3-none-any.whl", hash = "sha256:9cd50ae8eede26e3263d78102db880644d39dcc6a5376d38627c060e47bf9045", size = 25316, upload-time = "2024-12-03T21:21:56.043Z" },
 ]
 
 [[package]]

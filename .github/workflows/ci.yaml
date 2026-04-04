@@ -6,21 +6,31 @@ on:
   pull_request:
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Ruff check
+        run: uvx ruff check src/ tests/
+
+      - name: Ruff format check
+        run: uvx ruff format --check src/ tests/
+
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@v5
 
       - name: Install Pandoc
         run: sudo apt-get update && sudo apt-get install -y pandoc
 
       - name: Run tests
-        run: uv run pytest -v
+        run: uv run --extra dev pytest -v
 
       - name: Dry-run sync against fixture vault
-        run: |
-          uv run obsidian-remarkable-sync sync \
-            --vault-path tests/fixtures/sample_vault \
-            --dry-run
+        run: uv run --extra dev obsidian-remarkable-sync sync --vault-path tests/fixtures/sample_vault --dry-run

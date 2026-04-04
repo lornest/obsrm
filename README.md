@@ -90,7 +90,7 @@ Push-to-sync: changes to `.md` files or config on `main` automatically sync to y
 
 1. Run `uv run obsidian-remarkable-sync auth` locally
 2. Add contents of `~/.rmapi/rmapi.conf` as GitHub secret `RMAPI_CONFIG`
-3. Copy `.github/workflows/sync.yaml` to your vault repo
+3. Copy [`examples/sync-remarkable.yaml`](examples/sync-remarkable.yaml) to `.github/workflows/` in your vault repo
 
 Manual triggers support `--force` and `--dry-run` via the Actions UI.
 

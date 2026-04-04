@@ -24,9 +24,7 @@ def _make_mock_client(folder_contents: dict[str, list[str]]):
         parent = path.rsplit("/", 1)[0]
         name = path.rsplit("/", 1)[1]
         if parent in folder_contents:
-            folder_contents[parent] = [
-                e for e in folder_contents[parent] if e != name
-            ]
+            folder_contents[parent] = [e for e in folder_contents[parent] if e != name]
         folder_contents.pop(path, None)
 
     client.is_folder_empty = MagicMock(side_effect=is_folder_empty)
@@ -37,10 +35,12 @@ def _make_mock_client(folder_contents: dict[str, list[str]]):
 
 def test_cleanup_single_empty_folder():
     """Deleting all files in a folder should remove the folder."""
-    client = _make_mock_client({
-        "/Obsidian/Tools": [],  # empty after file deletions
-        "/Obsidian": ["Tools"],
-    })
+    client = _make_mock_client(
+        {
+            "/Obsidian/Tools": [],  # empty after file deletions
+            "/Obsidian": ["Tools"],
+        }
+    )
     _cleanup_empty_folders(
         ["Tools/Cilium.md", "Tools/Helm.md"],
         "/Obsidian",
@@ -53,14 +53,16 @@ def test_cleanup_nested_empty_folders():
     """Deleting files in nested folders should clean up the entire tree."""
     # After deleting all files: AA, bp, Subsea 7 are empty,
     # so Customers should also become empty and get deleted.
-    client = _make_mock_client({
-        "/Obsidian/GL/Customers/AA": [],
-        "/Obsidian/GL/Customers/bp": [],
-        "/Obsidian/GL/Customers/Subsea 7": [],
-        "/Obsidian/GL/Customers": ["AA", "bp", "Subsea 7"],
-        "/Obsidian/GL": ["Customers", "other-file"],
-        "/Obsidian": ["GL"],
-    })
+    client = _make_mock_client(
+        {
+            "/Obsidian/GL/Customers/AA": [],
+            "/Obsidian/GL/Customers/bp": [],
+            "/Obsidian/GL/Customers/Subsea 7": [],
+            "/Obsidian/GL/Customers": ["AA", "bp", "Subsea 7"],
+            "/Obsidian/GL": ["Customers", "other-file"],
+            "/Obsidian": ["GL"],
+        }
+    )
     _cleanup_empty_folders(
         [
             "GL/Customers/AA/file1.md",
@@ -80,10 +82,12 @@ def test_cleanup_nested_empty_folders():
 
 def test_cleanup_does_not_delete_target_folder():
     """The target folder itself (/Obsidian) should never be deleted."""
-    client = _make_mock_client({
-        "/Obsidian/Notes": [],
-        "/Obsidian": ["Notes"],
-    })
+    client = _make_mock_client(
+        {
+            "/Obsidian/Notes": [],
+            "/Obsidian": ["Notes"],
+        }
+    )
     _cleanup_empty_folders(
         ["Notes/file.md"],
         "/Obsidian",
@@ -95,9 +99,11 @@ def test_cleanup_does_not_delete_target_folder():
 
 def test_cleanup_non_empty_folder_kept():
     """Folders that still have files should not be deleted."""
-    client = _make_mock_client({
-        "/Obsidian/Notes": ["remaining-file"],
-    })
+    client = _make_mock_client(
+        {
+            "/Obsidian/Notes": ["remaining-file"],
+        }
+    )
     _cleanup_empty_folders(
         ["Notes/deleted.md"],
         "/Obsidian",
@@ -108,12 +114,14 @@ def test_cleanup_non_empty_folder_kept():
 
 def test_cleanup_deeply_nested():
     """Walk up through multiple levels of empty folders."""
-    client = _make_mock_client({
-        "/Obsidian/A/B/C": [],
-        "/Obsidian/A/B": ["C"],
-        "/Obsidian/A": ["B"],
-        "/Obsidian": ["A"],
-    })
+    client = _make_mock_client(
+        {
+            "/Obsidian/A/B/C": [],
+            "/Obsidian/A/B": ["C"],
+            "/Obsidian/A": ["B"],
+            "/Obsidian": ["A"],
+        }
+    )
     _cleanup_empty_folders(
         ["A/B/C/file.md"],
         "/Obsidian",
@@ -127,9 +135,11 @@ def test_cleanup_deeply_nested():
 
 def test_cleanup_no_subfolders():
     """Files at the root of target folder have no parent to clean up."""
-    client = _make_mock_client({
-        "/Obsidian": [],
-    })
+    client = _make_mock_client(
+        {
+            "/Obsidian": [],
+        }
+    )
     _cleanup_empty_folders(
         ["file.md"],
         "/Obsidian",

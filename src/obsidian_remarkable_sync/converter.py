@@ -72,27 +72,37 @@ def convert_file(
     cmd = [
         "pandoc",
         str(tmp_md),
-        "-o", str(output_path),
+        "-o",
+        str(output_path),
         # Disable yaml_metadata_block: we already extract frontmatter ourselves,
         # and leftover --- in content can cause YAML parse errors
-        "--from", "markdown+wikilinks_title_after_pipe-yaml_metadata_block",
-        "--metadata", f"title={title}",
-        "--resource-path", str(work_dir),
+        "--from",
+        "markdown+wikilinks_title_after_pipe-yaml_metadata_block",
+        "--metadata",
+        f"title={title}",
+        "--resource-path",
+        str(work_dir),
     ]
-
 
     if output_format == "epub":
         cmd.extend(["--to", "epub3", "--mathml", "--epub-title-page=false"])
     else:
         # PDF tuned for reMarkable e-ink display (1872x1404 @ 226 DPI ≈ 8.3" x 6.2")
         # Use A5 landscape which closely matches the aspect ratio
-        cmd.extend([
-            "-V", "geometry:paperwidth=8.3in",
-            "-V", "geometry:paperheight=6.2in",
-            "-V", "geometry:margin=0.6in",
-            "-V", "fontsize=11pt",
-            "-V", "linestretch=1.4",
-        ])
+        cmd.extend(
+            [
+                "-V",
+                "geometry:paperwidth=8.3in",
+                "-V",
+                "geometry:paperheight=6.2in",
+                "-V",
+                "geometry:margin=0.6in",
+                "-V",
+                "fontsize=11pt",
+                "-V",
+                "linestretch=1.4",
+            ]
+        )
 
     # Add Lua filter if available
     if filters_dir is None:
@@ -116,9 +126,7 @@ def convert_file(
     shutil.rmtree(work_dir, ignore_errors=True)
 
     if result.returncode != 0:
-        raise ConversionError(
-            f"Pandoc conversion failed:\n{result.stderr}"
-        )
+        raise ConversionError(f"Pandoc conversion failed:\n{result.stderr}")
 
     return output_path
 

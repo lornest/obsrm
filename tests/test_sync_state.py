@@ -1,6 +1,5 @@
 """Tests for sync state management."""
 
-import json
 import tempfile
 from pathlib import Path
 

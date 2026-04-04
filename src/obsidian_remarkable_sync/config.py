@@ -14,9 +14,7 @@ class RemarkableConfig(BaseModel):
 
 class VaultConfig(BaseModel):
     include: list[str] = Field(default_factory=lambda: ["**/*.md"])
-    exclude: list[str] = Field(
-        default_factory=lambda: ["_templates/**"]
-    )
+    exclude: list[str] = Field(default_factory=lambda: ["_templates/**"])
 
 
 class SyncConfig(BaseModel):
@@ -25,10 +23,15 @@ class SyncConfig(BaseModel):
     flatten: bool = False
 
 
+class PullConfig(BaseModel):
+    attachments_folder: str = "attachments"
+
+
 class Config(BaseModel):
     remarkable: RemarkableConfig = Field(default_factory=RemarkableConfig)
     vault: VaultConfig = Field(default_factory=VaultConfig)
     sync: SyncConfig = Field(default_factory=SyncConfig)
+    pull: PullConfig = Field(default_factory=PullConfig)
 
 
 def load_config(vault_path: Path, config_path: Path | None = None) -> Config:

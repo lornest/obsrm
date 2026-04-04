@@ -38,18 +38,11 @@ def test_scan_vault_returns_consistent_hashes():
 def test_resolve_remote_path_mirrored():
     assert resolve_remote_path("note.md", "/Obsidian", False) == "/Obsidian/note"
     assert (
-        resolve_remote_path("subfolder/note.md", "/Obsidian", False)
-        == "/Obsidian/subfolder/note"
+        resolve_remote_path("subfolder/note.md", "/Obsidian", False) == "/Obsidian/subfolder/note"
     )
-    assert (
-        resolve_remote_path("a/b/note.md", "/Obsidian", False)
-        == "/Obsidian/a/b/note"
-    )
+    assert resolve_remote_path("a/b/note.md", "/Obsidian", False) == "/Obsidian/a/b/note"
 
 
 def test_resolve_remote_path_flattened():
     assert resolve_remote_path("note.md", "/Obsidian", True) == "/Obsidian/note"
-    assert (
-        resolve_remote_path("subfolder/note.md", "/Obsidian", True)
-        == "/Obsidian/note"
-    )
+    assert resolve_remote_path("subfolder/note.md", "/Obsidian", True) == "/Obsidian/note"

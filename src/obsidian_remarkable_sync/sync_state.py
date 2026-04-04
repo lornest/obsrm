@@ -101,3 +101,7 @@ class SyncState:
 
     def remove_entry(self, rel_path: str) -> None:
         self.entries.pop(rel_path, None)
+
+    def known_remote_paths(self) -> set[str]:
+        """Return the set of all remote paths tracked in state."""
+        return {entry.remote_path for entry in self.entries.values()}
