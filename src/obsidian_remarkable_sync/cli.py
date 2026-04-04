@@ -210,15 +210,20 @@ def _cleanup_empty_folders(
     # Sort deepest first so children are removed before parents
     sorted_folders = sorted(folders_to_check, key=lambda f: f.count("/"), reverse=True)
 
-    checked: set[str] = set()
+    deleted_folders: set[str] = set()
     for folder in sorted_folders:
         # Walk up the tree
         current = folder
-        while current and current != target_folder and current not in checked:
-            checked.add(current)
+        while current and current != target_folder:
+            if current in deleted_folders:
+                # Already removed this folder, move up
+                parent = current.rsplit("/", 1)[0]
+                current = parent if parent != current else ""
+                continue
             if client.is_folder_empty(current):
                 click.echo(f"  Removing empty folder: {current}")
                 client.delete_folder(current)
+                deleted_folders.add(current)
                 time.sleep(RMAPI_DELAY)
                 # Move up to parent
                 parent = current.rsplit("/", 1)[0]
