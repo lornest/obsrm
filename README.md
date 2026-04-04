@@ -1,19 +1,25 @@
 # obsidian-remarkable-sync
 
-Sync an Obsidian vault to a reMarkable tablet. Converts markdown notes to ePub (or PDF), preserving Obsidian-specific features like wikilinks, callouts, embeds, and images. Runs locally via CLI or automatically via GitHub Actions on push.
+Bidirectional sync between an Obsidian vault and a reMarkable tablet. Pushes markdown notes as ePub/PDF (preserving wikilinks, callouts, embeds, images) and pulls notebooks/handwritten notes back as markdown. Runs locally via CLI or automatically via GitHub Actions.
 
 ## How it works
 
 ```
-Obsidian vault (git repo)
-  -> Detect changed files (SHA-256 hash-based)
+Push (Obsidian -> reMarkable):
+  Detect changed files (SHA-256 hash-based)
   -> Preprocess Obsidian markdown (embeds, frontmatter, dataview)
   -> Convert to ePub/PDF via Pandoc
   -> Upload to reMarkable Cloud via rmapi
-  -> Persist sync state for incremental updates
+
+Pull (reMarkable -> Obsidian):
+  List remote files via rmapi
+  -> Detect new/changed files (ModifiedClient timestamp)
+  -> Download notebooks and annotated PDFs
+  -> Extract typed text or render handwriting as SVG
+  -> Create markdown files in vault
 ```
 
-Only changed files are synced on each run. State is tracked in `.sync-state.json`.
+Obsidian is the source of truth. Files created on either side are tracked and synced incrementally via `.sync-state.json`.
 
 ## Quick start
 
@@ -39,12 +45,17 @@ uv run obsidian-remarkable-sync sync --vault-path ~/my-vault
 ## CLI commands
 
 ```
-obsidian-remarkable-sync sync [OPTIONS]    Sync changed files to reMarkable
+obsidian-remarkable-sync sync [OPTIONS]    Bidirectional sync (push then pull)
   --vault-path PATH    Path to Obsidian vault (default: current dir)
   --config PATH        Path to sync-config.yaml
   --dry-run            Show what would change without syncing
   --force              Re-sync all files regardless of state
   -v, --verbose        Debug logging
+
+obsidian-remarkable-sync pull [OPTIONS]    Pull-only (reMarkable -> Obsidian)
+  --vault-path PATH    Path to Obsidian vault (default: current dir)
+  --config PATH        Path to sync-config.yaml
+  --dry-run            Show what would be pulled without doing it
 
 obsidian-remarkable-sync auth              Set up reMarkable Cloud auth
 obsidian-remarkable-sync status [OPTIONS]  Show sync state and pending changes
@@ -70,6 +81,9 @@ sync:
   state_file: ".sync-state.json"
   delete_removed: false         # Delete from reMarkable when removed from vault
   flatten: false                # Flatten folder structure on reMarkable
+
+pull:
+  attachments_folder: "attachments"  # Where to store downloaded PDFs/SVGs
 ```
 
 All settings have sensible defaults. The config file is optional.
@@ -100,12 +114,14 @@ See [SETUP.md](SETUP.md) for detailed instructions.
 
 ```
 src/obsidian_remarkable_sync/
-  cli.py                 Click CLI entry point
+  cli.py                 Click CLI entry point (sync, pull, status, auth)
   config.py              YAML config + pydantic validation
   vault.py               Vault scanning with include/exclude globs
   sync_state.py          JSON state file and changeset computation
   markdown_processor.py  Obsidian markdown preprocessing
   converter.py           Pandoc ePub/PDF conversion
+  pull.py                Reverse sync (download + extract from reMarkable)
+  rm_extract.py          Extract typed text from reMarkable notebooks
   remarkable.py          rmapi CLI wrapper
 filters/obsidian.lua     Pandoc Lua filter (callouts, highlights)
 styles/remarkable.css    E-ink optimized stylesheet
