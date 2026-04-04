@@ -38,12 +38,28 @@ def test_list_remote_files_filters_directories():
         "/Obsidian/Notes/Sub": "d",
         "/Obsidian/Notes/Sub/File3": "f",
     }
-    result = list_remote_files(client, "/Obsidian")
+    result, complete = list_remote_files(client, "/Obsidian")
+    assert complete
     assert "/Obsidian/Notes/File1" in result
     assert "/Obsidian/Notes/File2" in result
     assert "/Obsidian/Notes/Sub/File3" in result
     assert "/Obsidian/Notes" not in result
     assert "/Obsidian/Notes/Sub" not in result
+
+
+def test_list_remote_files_reports_incomplete_on_error():
+    """If list_recursive has errors, listing_complete should be False."""
+    client = MagicMock()
+    # Simulate list_recursive populating errors via side_effect
+    def fake_list_recursive(path, errors=None):
+        if errors is not None:
+            errors.append("/Obsidian/FailedFolder")
+        return {"/Obsidian/File1": "f"}
+
+    client.list_recursive.side_effect = fake_list_recursive
+    result, complete = list_remote_files(client, "/Obsidian")
+    assert "/Obsidian/File1" in result
+    assert not complete
 
 
 # --- _create_markdown ---

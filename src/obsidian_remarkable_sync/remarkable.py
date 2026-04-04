@@ -97,10 +97,14 @@ class RemarkableClient:
                 entries.append((match.group(1), match.group(2)))
         return entries
 
-    def list_recursive(self, remote_path: str) -> dict[str, str]:
+    def list_recursive(
+        self, remote_path: str, errors: list[str] | None = None
+    ) -> dict[str, str]:
         """Recursively list all files under a remote path.
 
         Returns dict mapping remote file paths to their type ('f' or 'd').
+        If errors is provided, failed subfolder paths are appended to it
+        so callers can detect an incomplete listing.
         """
         result: dict[str, str] = {}
         entries = self.list_folder_entries(remote_path)
@@ -109,9 +113,11 @@ class RemarkableClient:
             result[full_path] = entry_type
             if entry_type == "d":
                 try:
-                    result.update(self.list_recursive(full_path))
+                    result.update(self.list_recursive(full_path, errors))
                 except RmapiError:
                     logger.warning("Could not list %s", full_path)
+                    if errors is not None:
+                        errors.append(full_path)
         return result
 
     def download(self, remote_path: str, output_dir: Path) -> Path:

@@ -138,6 +138,7 @@ def _run_pull(
     state: SyncState,
     remote_files: dict[str, str],
     dry_run: bool,
+    listing_complete: bool = True,
 ) -> tuple[int, int, int, list[str]]:
     """Pull remote changes to Obsidian.
 
@@ -173,18 +174,19 @@ def _run_pull(
             if remote_mod and remote_mod != entry.remote_modified:
                 changed_files.append(remote_path)
 
-    # Detect files deleted on reMarkable
+    # Detect files deleted on reMarkable (only if listing was complete)
     remote_path_set = set(remote_files.keys())
     deleted_pull: list[FileEntry] = []  # pull-origin: delete local files
     re_push: list[str] = []  # push-origin deleted on reMarkable: need re-push
-    for entry in list(state.entries.values()):
-        if entry.remote_path and entry.remote_path not in remote_path_set:
-            if entry.origin == "pull":
-                deleted_pull.append(entry)
-            else:
-                # Push-origin deleted on reMarkable — needs re-push
-                re_push.append(entry.rel_path)
-                state.remove_entry(entry.rel_path)
+    if listing_complete:
+        for entry in list(state.entries.values()):
+            if entry.remote_path and entry.remote_path not in remote_path_set:
+                if entry.origin == "pull":
+                    deleted_pull.append(entry)
+                else:
+                    # Push-origin deleted on reMarkable — needs re-push
+                    re_push.append(entry.rel_path)
+                    state.remove_entry(entry.rel_path)
 
     pull_files = [(p, "new") for p in new_files] + [(p, "changed") for p in changed_files]
     has_work = pull_files or deleted_pull or re_push
@@ -310,8 +312,10 @@ def sync(
 
     # List remote files for pull phase
     click.echo("Listing remote files...")
-    remote_files = list_remote_files(client, config.remarkable.target_folder)
+    remote_files, listing_complete = list_remote_files(client, config.remarkable.target_folder)
     click.echo(f"Found {len(remote_files)} remote files")
+    if not listing_complete:
+        click.echo("WARNING: Some folders could not be listed. Skipping deletion detection.")
 
     try:
         # Phase 1: Push
@@ -329,7 +333,7 @@ def sync(
 
         # Phase 2: Pull
         pull_done, pull_errors, pull_deleted, re_push_paths = _run_pull(
-            client, vault_path, config, state, remote_files, dry_run
+            client, vault_path, config, state, remote_files, dry_run, listing_complete
         )
 
         # Phase 3: Re-push files deleted on reMarkable but still in vault
@@ -517,15 +521,17 @@ def pull(
         sys.exit(1)
 
     click.echo("Listing remote files...")
-    remote_files = list_remote_files(client, config.remarkable.target_folder)
+    remote_files, listing_complete = list_remote_files(client, config.remarkable.target_folder)
     click.echo(f"Found {len(remote_files)} files on reMarkable")
+    if not listing_complete:
+        click.echo("WARNING: Some folders could not be listed. Skipping deletion detection.")
 
     state_file = vault_path / config.sync.state_file
     state = SyncState(state_file)
 
     try:
         pulled, errors, deleted, re_push = _run_pull(
-            client, vault_path, config, state, remote_files, dry_run
+            client, vault_path, config, state, remote_files, dry_run, listing_complete
         )
     except (KeyboardInterrupt, Exception) as e:
         if isinstance(e, KeyboardInterrupt):

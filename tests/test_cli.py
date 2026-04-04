@@ -596,6 +596,87 @@ def test_delete_pulled_file_cleans_nested_empty_dirs(tmp_path):
     assert (vault / "attachments").exists()
 
 
+# --- partial listing safety ---
+
+
+@patch("obsidian_remarkable_sync.cli.RemarkableClient")
+def test_pull_skips_deletions_on_incomplete_listing(mock_client_cls, runner, vault):
+    """If remote listing had errors, deletions should not be processed."""
+    mock_client = MagicMock()
+    mock_client_cls.return_value = mock_client
+
+    # Simulate partial listing: list_recursive reports errors
+    def fake_list_recursive(path, errors=None):
+        if errors is not None:
+            errors.append("/Test/FailedSubfolder")
+        return {"/Test/note": "f"}
+
+    mock_client.list_recursive.side_effect = fake_list_recursive
+    mock_client.stat.return_value = {"ModifiedClient": "2026-04-04T13:00:00Z"}
+
+    # Track a pull-origin file that won't appear in partial listing
+    pulled_md = vault / "subfolder_note.md"
+    pulled_md.write_text("# From subfolder\n")
+
+    state = SyncState(vault / ".sync-state.json")
+    from obsidian_remarkable_sync.vault import _hash_file
+
+    h = _hash_file(vault / "note.md")
+    state.update_entry("note.md", h, "/Test/note")
+    state.update_entry(
+        "subfolder_note.md", "abc", "/Test/FailedSubfolder/note", "2026-04-04T13:00:00Z", "pull"
+    )
+    state.save()
+
+    result = runner.invoke(cli, ["pull", "--vault-path", str(vault)])
+    assert result.exit_code == 0
+    assert "Skipping deletion detection" in result.output
+    # File should NOT be deleted
+    assert pulled_md.exists()
+    state2 = SyncState(vault / ".sync-state.json")
+    assert "subfolder_note.md" in state2.entries
+
+
+# --- end-to-end changed file pull ---
+
+
+@patch("obsidian_remarkable_sync.cli.RemarkableClient")
+def test_pull_downloads_changed_pull_origin_file(mock_client_cls, runner, vault):
+    """Pull-origin file with changed ModifiedClient should be re-downloaded."""
+    mock_client = MagicMock()
+    mock_client_cls.return_value = mock_client
+    mock_client.list_recursive.return_value = {"/Test/note": "f", "/Test/hw": "f"}
+    mock_client.stat.return_value = {"ModifiedClient": "2026-04-04T15:00:00Z"}
+
+    # Pre-create the pulled file
+    hw_md = vault / "hw.md"
+    hw_md.write_text("# Old content\n")
+
+    from obsidian_remarkable_sync.vault import _hash_file
+
+    state = SyncState(vault / ".sync-state.json")
+    h = _hash_file(vault / "note.md")
+    state.update_entry("note.md", h, "/Test/note")
+    state.update_entry("hw.md", "abc", "/Test/hw", "2026-04-04T13:00:00Z", "pull")
+    state.save()
+
+    def fake_pull_file(client, remote_path, vault_path, target_folder, att_folder):
+        md = vault_path / "hw.md"
+        md.write_text("# Updated content from reMarkable\n")
+        return md, None
+
+    with patch("obsidian_remarkable_sync.pull.pull_file", side_effect=fake_pull_file):
+        result = runner.invoke(cli, ["pull", "--vault-path", str(vault)])
+
+    assert result.exit_code == 0
+    assert "1 changed" in result.output
+    assert "1 pulled" in result.output
+    assert hw_md.read_text() == "# Updated content from reMarkable\n"
+
+    state2 = SyncState(vault / ".sync-state.json")
+    assert state2.entries["hw.md"].remote_modified == "2026-04-04T15:00:00Z"
+
+
 # --- auth ---
 
 

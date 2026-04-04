@@ -11,13 +11,19 @@ from obsidian_remarkable_sync.remarkable import RemarkableClient
 logger = logging.getLogger(__name__)
 
 
-def list_remote_files(client: RemarkableClient, target_folder: str) -> dict[str, str]:
+def list_remote_files(
+    client: RemarkableClient, target_folder: str
+) -> tuple[dict[str, str], bool]:
     """List all files (not directories) under the target folder.
 
-    Returns dict of remote_path -> 'f' for files only.
+    Returns (files_dict, listing_complete) where files_dict maps
+    remote_path -> 'f' for files only, and listing_complete is False
+    if any subfolders failed to list.
     """
-    all_entries = client.list_recursive(target_folder)
-    return {path: entry_type for path, entry_type in all_entries.items() if entry_type == "f"}
+    errors: list[str] = []
+    all_entries = client.list_recursive(target_folder, errors)
+    files = {path: entry_type for path, entry_type in all_entries.items() if entry_type == "f"}
+    return files, len(errors) == 0
 
 
 def remote_path_to_vault_rel(remote_path: str, target_folder: str) -> str:

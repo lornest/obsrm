@@ -4,5 +4,7 @@ __pycache__/
 dist/
 build/
 .pytest_cache/
+.coverage
+htmlcov/
 *.pyc
 .sync-state.json
