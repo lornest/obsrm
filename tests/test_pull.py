@@ -50,6 +50,7 @@ def test_list_remote_files_filters_directories():
 def test_list_remote_files_reports_incomplete_on_error():
     """If list_recursive has errors, listing_complete should be False."""
     client = MagicMock()
+
     # Simulate list_recursive populating errors via side_effect
     def fake_list_recursive(path, errors=None):
         if errors is not None:

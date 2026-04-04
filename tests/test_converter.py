@@ -94,8 +94,8 @@ def test_convert_uses_filename_as_title_when_no_frontmatter(tmp_path):
 @requires_pandoc
 def test_convert_pandoc_failure(tmp_path, monkeypatch):
     """Pandoc returning non-zero should raise ConversionError."""
-    from unittest.mock import patch
     import subprocess
+    from unittest.mock import patch
 
     vault = tmp_path
     note = vault / "note.md"

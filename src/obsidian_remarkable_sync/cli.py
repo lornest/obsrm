@@ -77,9 +77,7 @@ def _run_push(
         )
 
         try:
-            output_path = convert_file(
-                file_path, vault_path, config.remarkable.format, output_dir
-            )
+            output_path = convert_file(file_path, vault_path, config.remarkable.format, output_dir)
         except ConversionError as e:
             click.echo(f"    Conversion failed: {e}", err=True)
             errors += 1
@@ -295,13 +293,6 @@ def sync(
     click.echo(f"Target: {config.remarkable.target_folder}")
     click.echo(f"Format: {config.remarkable.format}")
 
-    # Initialize reMarkable client
-    try:
-        client = RemarkableClient()
-    except RmapiError as e:
-        click.echo(f"Error: {e}", err=True)
-        sys.exit(1)
-
     state_file = vault_path / config.sync.state_file
     state = SyncState(state_file)
 
@@ -309,6 +300,25 @@ def sync(
     click.echo("Scanning vault...")
     current_files = scan_vault(vault_path, config.vault.include, config.vault.exclude)
     click.echo(f"Found {len(current_files)} local files")
+
+    # Initialize reMarkable client (deferred so dry-run can show push changes without rmapi)
+    try:
+        client = RemarkableClient()
+    except RmapiError as e:
+        if dry_run:
+            # Show push changeset without rmapi, skip pull phase
+            if force:
+                changeset = Changeset(added=list(current_files.keys()))
+            else:
+                changeset = state.compute_changeset(current_files, config.sync.delete_removed)
+            click.echo(f"Push: {changeset.summary()}")
+            if changeset.has_changes:
+                _print_changeset(changeset)
+            click.echo(f"\nNote: {e} — pull phase skipped.")
+            click.echo("(dry run -- no changes made)")
+            return
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
 
     # List remote files for pull phase
     click.echo("Listing remote files...")

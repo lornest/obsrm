@@ -11,9 +11,7 @@ from obsidian_remarkable_sync.remarkable import RemarkableClient
 logger = logging.getLogger(__name__)
 
 
-def list_remote_files(
-    client: RemarkableClient, target_folder: str
-) -> tuple[dict[str, str], bool]:
+def list_remote_files(client: RemarkableClient, target_folder: str) -> tuple[dict[str, str], bool]:
     """List all files (not directories) under the target folder.
 
     Returns (files_dict, listing_complete) where files_dict maps

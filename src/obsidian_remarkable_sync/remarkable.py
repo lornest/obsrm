@@ -97,9 +97,7 @@ class RemarkableClient:
                 entries.append((match.group(1), match.group(2)))
         return entries
 
-    def list_recursive(
-        self, remote_path: str, errors: list[str] | None = None
-    ) -> dict[str, str]:
+    def list_recursive(self, remote_path: str, errors: list[str] | None = None) -> dict[str, str]:
         """Recursively list all files under a remote path.
 
         Returns dict mapping remote file paths to their type ('f' or 'd').

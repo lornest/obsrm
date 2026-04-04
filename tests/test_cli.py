@@ -16,11 +16,7 @@ def vault(tmp_path):
     """Create a minimal vault with config and a markdown file."""
     config = tmp_path / "sync-config.yaml"
     config.write_text(
-        "remarkable:\n"
-        "  target_folder: /Test\n"
-        "  format: epub\n"
-        "sync:\n"
-        "  delete_removed: true\n"
+        "remarkable:\n  target_folder: /Test\n  format: epub\nsync:\n  delete_removed: true\n"
     )
     note = tmp_path / "note.md"
     note.write_text("# Hello\n")

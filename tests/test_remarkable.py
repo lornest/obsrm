@@ -116,9 +116,7 @@ def test_list_recursive(client):
             args=[], returncode=0, stdout="[f]\tnote1\n[d]\tsub\n", stderr=""
         ),
         # Second call: list /Root/sub
-        subprocess.CompletedProcess(
-            args=[], returncode=0, stdout="[f]\tnote2\n", stderr=""
-        ),
+        subprocess.CompletedProcess(args=[], returncode=0, stdout="[f]\tnote2\n", stderr=""),
     ]
     with patch("subprocess.run", side_effect=responses):
         result = client.list_recursive("/Root")
@@ -135,9 +133,7 @@ def test_list_recursive_handles_subfolder_error(client):
             args=[], returncode=0, stdout="[f]\tnote1\n[d]\tbad_sub\n", stderr=""
         ),
         # subfolder listing fails
-        subprocess.CompletedProcess(
-            args=[], returncode=1, stdout="", stderr="permission denied"
-        ),
+        subprocess.CompletedProcess(args=[], returncode=1, stdout="", stderr="permission denied"),
     ]
     with patch("subprocess.run", side_effect=responses):
         result = client.list_recursive("/Root")

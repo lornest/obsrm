@@ -64,9 +64,7 @@ def test_handle_notebook_typed_text_creates_md(tmp_path):
     pages = [{"paragraphs": [{"text": "Hello from notebook", "style": "plain"}]}]
 
     with (
-        patch(
-            "obsidian_remarkable_sync.rm_extract.extract_text_from_rmdoc", return_value=pages
-        ),
+        patch("obsidian_remarkable_sync.rm_extract.extract_text_from_rmdoc", return_value=pages),
         patch(
             "obsidian_remarkable_sync.rm_extract.pages_to_markdown",
             return_value="# MyNote\n\nHello from notebook\n",
@@ -93,9 +91,7 @@ def test_handle_notebook_typed_text_appends_to_existing(tmp_path):
     pages = [{"paragraphs": [{"text": "New typed text", "style": "plain"}]}]
 
     with (
-        patch(
-            "obsidian_remarkable_sync.rm_extract.extract_text_from_rmdoc", return_value=pages
-        ),
+        patch("obsidian_remarkable_sync.rm_extract.extract_text_from_rmdoc", return_value=pages),
         patch(
             "obsidian_remarkable_sync.rm_extract.pages_to_markdown",
             return_value="New typed text\n",
@@ -123,9 +119,7 @@ def test_handle_notebook_raw_fallback(tmp_path):
     vault.mkdir()
     md_path = vault / "MyNote.md"
 
-    with patch(
-        "obsidian_remarkable_sync.rm_extract.extract_text_from_rmdoc", return_value=[]
-    ):
+    with patch("obsidian_remarkable_sync.rm_extract.extract_text_from_rmdoc", return_value=[]):
         # rmc import will fail (ImportError), triggering raw fallback
         md, att = _handle_notebook(rmdoc, md_path, "MyNote", vault, Path("."), "attachments")
 
@@ -150,9 +144,7 @@ def test_handle_notebook_raw_fallback_existing_md(tmp_path):
     md_path = vault / "MyNote.md"
     md_path.write_text("# Original content\n")
 
-    with patch(
-        "obsidian_remarkable_sync.rm_extract.extract_text_from_rmdoc", return_value=[]
-    ):
+    with patch("obsidian_remarkable_sync.rm_extract.extract_text_from_rmdoc", return_value=[]):
         md, att = _handle_notebook(rmdoc, md_path, "MyNote", vault, Path("."), "attachments")
 
     content = md_path.read_text()
@@ -173,12 +165,8 @@ def test_handle_notebook_raw_fallback_with_subdirectory(tmp_path):
     md_dir.mkdir()
     md_path = md_dir / "MyNote.md"
 
-    with patch(
-        "obsidian_remarkable_sync.rm_extract.extract_text_from_rmdoc", return_value=[]
-    ):
-        md, att = _handle_notebook(
-            rmdoc, md_path, "MyNote", vault, Path("sub"), "attachments"
-        )
+    with patch("obsidian_remarkable_sync.rm_extract.extract_text_from_rmdoc", return_value=[]):
+        md, att = _handle_notebook(rmdoc, md_path, "MyNote", vault, Path("sub"), "attachments")
 
     assert att.parent == vault / "attachments" / "sub"
 
@@ -201,9 +189,7 @@ def test_handle_notebook_svg_fallback(tmp_path):
         svg_path.write_text("<svg>fake</svg>")
 
     with (
-        patch(
-            "obsidian_remarkable_sync.rm_extract.extract_text_from_rmdoc", return_value=[]
-        ),
+        patch("obsidian_remarkable_sync.rm_extract.extract_text_from_rmdoc", return_value=[]),
         patch.dict("sys.modules", {"rmc": MagicMock(rm_to_svg=fake_rm_to_svg)}),
     ):
         md, att = _handle_notebook(rmdoc, md_path, "MyNote", vault, Path("."), "attachments")
@@ -260,9 +246,7 @@ def test_pull_file_dispatches_to_notebook(tmp_path):
             return_value=str(tmp_path / "dl"),
         ),
         patch("obsidian_remarkable_sync.pull.shutil.rmtree"),
-        patch(
-            "obsidian_remarkable_sync.rm_extract.extract_text_from_rmdoc", return_value=[]
-        ),
+        patch("obsidian_remarkable_sync.rm_extract.extract_text_from_rmdoc", return_value=[]),
     ):
         md, att = pull_file(client, "/Test/MyNote", vault, "/Test", "attachments")
 

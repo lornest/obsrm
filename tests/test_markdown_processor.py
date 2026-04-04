@@ -134,9 +134,7 @@ def test_circular_embed_actual_cycle(tmp_path):
     """Two files that embed each other should hit the circular embed guard."""
     (tmp_path / "a.md").write_text("before\n![[b]]\nafter\n")
     (tmp_path / "b.md").write_text("hello\n![[a]]\ngoodbye\n")
-    processed, _, _ = process_markdown(
-        (tmp_path / "a.md").read_text(), tmp_path / "a.md", tmp_path
-    )
+    processed, _, _ = process_markdown((tmp_path / "a.md").read_text(), tmp_path / "a.md", tmp_path)
     assert "Circular embed" in processed
     assert "hello" in processed
 
