@@ -127,9 +127,7 @@ class SyncService:
         if force:
             changeset = Changeset(added=list(current_files.keys()))
         else:
-            changeset = self.state.compute_changeset(
-                current_files, self.config.sync.delete_removed
-            )
+            changeset = self.state.compute_changeset(current_files, self.config.sync.delete_removed)
 
         self._emit(kind="summary", phase="push", summary=changeset.summary())
 
@@ -169,9 +167,7 @@ class SyncService:
                         output_dir,
                     )
                 except ConversionError as e:
-                    self._emit(
-                        kind="file_error", phase="conversion", error=str(e)
-                    )
+                    self._emit(kind="file_error", phase="conversion", error=str(e))
                     result.errors += 1
                     continue
 
@@ -182,15 +178,11 @@ class SyncService:
                     else:
                         self.client.upload(output_path, remote_folder)
                 except RmapiError as e:
-                    self._emit(
-                        kind="file_error", phase="upload", error=str(e)
-                    )
+                    self._emit(kind="file_error", phase="upload", error=str(e))
                     result.errors += 1
                     continue
 
-                self.state.update_entry(
-                    rel_path, current_files[rel_path], remote_path
-                )
+                self.state.update_entry(rel_path, current_files[rel_path], remote_path)
                 self.state.save()
                 result.pushed_remote_paths.add(remote_path)
                 result.done += 1
@@ -266,9 +258,7 @@ class SyncService:
                     metadata = self.client.stat(remote_path)
                     remote_mod = metadata.get("ModifiedClient", "")
                 except RmapiError:
-                    logger.debug(
-                        "Could not stat %s, skipping change check", remote_path
-                    )
+                    logger.debug("Could not stat %s, skipping change check", remote_path)
                     continue
                 if remote_mod and remote_mod != entry.remote_modified:
                     changed_files.append(remote_path)
@@ -286,9 +276,7 @@ class SyncService:
                         re_push.append(entry.rel_path)
                         self.state.remove_entry(entry.rel_path)
 
-        pull_files = [(p, "new") for p in new_files] + [
-            (p, "changed") for p in changed_files
-        ]
+        pull_files = [(p, "new") for p in new_files] + [(p, "changed") for p in changed_files]
         has_work = pull_files or deleted_pull or re_push
 
         if not has_work:
@@ -322,9 +310,7 @@ class SyncService:
 
         if dry_run:
             for path, file_kind in pull_files:
-                rel = remote_path_to_vault_rel(
-                    path, self.config.remarkable.target_folder
-                )
+                rel = remote_path_to_vault_rel(path, self.config.remarkable.target_folder)
                 marker = "+" if file_kind == "new" else "~"
                 self._emit(kind="changeset", op=marker, rel_path=rel)
             for entry in deleted_pull:
@@ -340,12 +326,8 @@ class SyncService:
 
         # Process deletions first
         for entry in deleted_pull:
-            _delete_pulled_file(
-                self.vault_path, entry, self.config.pull.attachments_folder
-            )
-            self._emit(
-                kind="file_done", phase="delete_local", rel_path=entry.rel_path
-            )
+            _delete_pulled_file(self.vault_path, entry, self.config.pull.attachments_folder)
+            self._emit(kind="file_done", phase="delete_local", rel_path=entry.rel_path)
             self.state.remove_entry(entry.rel_path)
         if deleted_pull or re_push:
             self.state.save()
@@ -354,9 +336,7 @@ class SyncService:
         total = len(pull_files)
 
         for i, (remote_path, file_kind) in enumerate(pull_files, 1):
-            rel = remote_path_to_vault_rel(
-                remote_path, self.config.remarkable.target_folder
-            )
+            rel = remote_path_to_vault_rel(remote_path, self.config.remarkable.target_folder)
             self._emit(
                 kind="file_start",
                 index=i,
@@ -385,9 +365,7 @@ class SyncService:
                 remote_modified = metadata.get("ModifiedClient", "")
             except RmapiError:
                 pass
-            self.state.update_entry(
-                rel_local, content_hash, remote_path, remote_modified, "pull"
-            )
+            self.state.update_entry(rel_local, content_hash, remote_path, remote_modified, "pull")
             self.state.save()
             result.pulled += 1
             self._emit(
@@ -444,9 +422,7 @@ class SyncService:
                     )
                     result.errors += 1
                     continue
-                self.state.update_entry(
-                    rel_path, current_files[rel_path], remote_path
-                )
+                self.state.update_entry(rel_path, current_files[rel_path], remote_path)
                 self.state.save()
                 result.done += 1
                 self._emit(
@@ -504,9 +480,7 @@ def cleanup_empty_folders(
     if not folders_to_check:
         return
 
-    sorted_folders = sorted(
-        folders_to_check, key=lambda f: f.count("/"), reverse=True
-    )
+    sorted_folders = sorted(folders_to_check, key=lambda f: f.count("/"), reverse=True)
 
     deleted_folders: set[str] = set()
     for folder in sorted_folders:
@@ -528,9 +502,7 @@ def cleanup_empty_folders(
                 break
 
 
-def _delete_pulled_file(
-    vault_path: Path, entry: FileEntry, attachments_folder: str
-) -> None:
+def _delete_pulled_file(vault_path: Path, entry: FileEntry, attachments_folder: str) -> None:
     """Delete a pulled file's markdown and any associated attachments."""
     md_path = vault_path / entry.rel_path
     if md_path.exists():

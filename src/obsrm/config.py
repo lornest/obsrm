@@ -59,9 +59,7 @@ def load_config(vault_path: Path, config_path: Path | None = None) -> Config:
         config.remarkable.target_folder = env_folder
     if env_format := os.environ.get("REMARKABLE_FORMAT"):
         if env_format not in ("epub", "pdf"):
-            raise ValueError(
-                f"Invalid REMARKABLE_FORMAT={env_format!r}. Must be 'epub' or 'pdf'."
-            )
+            raise ValueError(f"Invalid REMARKABLE_FORMAT={env_format!r}. Must be 'epub' or 'pdf'.")
         config.remarkable.format = env_format
 
     return config

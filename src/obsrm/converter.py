@@ -94,7 +94,8 @@ def convert_file(
         cmd.extend(
             [
                 "--pdf-engine=xelatex",
-                "-H", _latex_preamble_path(),
+                "-H",
+                _latex_preamble_path(),
                 "-V",
                 "geometry:paperwidth=6.2in",
                 "-V",
@@ -133,7 +134,6 @@ def convert_file(
         raise ConversionError(f"Pandoc conversion failed:\n{result.stderr}")
 
     return output_path
-
 
 
 def _latex_preamble_path() -> str:

@@ -167,9 +167,7 @@ def sync(
         click.echo("Error: multiple local files map to the same remote path:", err=True)
         for remote, locals in e.collisions.items():
             click.echo(f"  {remote} <- {', '.join(locals)}", err=True)
-        click.echo(
-            "Rename files or disable flatten to resolve collisions.", err=True
-        )
+        click.echo("Rename files or disable flatten to resolve collisions.", err=True)
         raise click.Abort() from e
     except KeyboardInterrupt:
         click.echo("\n\nInterrupted by user.", err=True)

@@ -190,9 +190,7 @@ _LATEX_SORTED = sorted(_LATEX_SYMBOLS.keys(), key=len, reverse=True)
 
 # Regex that matches any LaTeX command from our table, requiring a word boundary after
 # the command (so \land doesn't match inside \ландscape)
-_LATEX_PATTERN = re.compile(
-    "|".join(re.escape(cmd) + r"(?![a-zA-Z])" for cmd in _LATEX_SORTED)
-)
+_LATEX_PATTERN = re.compile("|".join(re.escape(cmd) + r"(?![a-zA-Z])" for cmd in _LATEX_SORTED))
 
 
 def _convert_latex_to_unicode(content: str) -> str:
@@ -266,9 +264,7 @@ def _fix_latex_superscripts(content: str) -> str:
     def _fix_math(m: re.Match) -> str:
         text = m.group(0)
         # ^\ or _\ followed by a command and its braced argument: wrap in braces
-        text = re.sub(
-            r"([_^])(\\[a-zA-Z]+\{[^}]*\})", r"\1{\2}", text
-        )
+        text = re.sub(r"([_^])(\\[a-zA-Z]+\{[^}]*\})", r"\1{\2}", text)
         return text
 
     # Apply to display math, then inline math
