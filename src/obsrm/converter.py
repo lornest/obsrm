@@ -111,16 +111,14 @@ def convert_file(
 
     # Add Lua filter if available
     if filters_dir is None:
-        filters_dir = _find_package_dir() / "../../filters"
-        filters_dir = filters_dir.resolve()
+        filters_dir = _find_package_dir() / "filters"
     lua_filter = filters_dir / "obsidian.lua"
     if lua_filter.exists():
         cmd.extend(["--lua-filter", str(lua_filter)])
 
     # Add CSS stylesheet if available
     if styles_dir is None:
-        styles_dir = _find_package_dir() / "../../styles"
-        styles_dir = styles_dir.resolve()
+        styles_dir = _find_package_dir() / "styles"
     css_file = styles_dir / "remarkable.css"
     if css_file.exists():
         cmd.extend(["--css", str(css_file)])
@@ -138,8 +136,8 @@ def convert_file(
 
 def _latex_preamble_path() -> str:
     """Return path to the XeLaTeX preamble file for PDF output."""
-    preamble = _find_package_dir() / "../../styles" / "preamble.tex"
-    return str(preamble.resolve())
+    preamble = _find_package_dir() / "styles" / "preamble.tex"
+    return str(preamble)
 
 
 def _find_package_dir() -> Path:
