@@ -115,7 +115,9 @@ def test_duplicate_image_basenames_get_unique_staged_names(tmp_path):
     staged_names = [name for _, name in images]
     # Both end with _diagram.png but have different hash prefixes
     assert all(name.endswith("_diagram.png") for name in staged_names)
-    assert staged_names[0] != staged_names[1], "duplicate basenames must produce unique staged names"
+    assert staged_names[0] != staged_names[1], (
+        "duplicate basenames must produce unique staged names"
+    )
 
 
 def test_external_image_not_resolved():

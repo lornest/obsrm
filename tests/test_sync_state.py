@@ -1,6 +1,6 @@
 """Tests for sync state management."""
 
-import json
+import contextlib
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -187,11 +187,11 @@ def test_save_is_atomic_on_write_failure(tmp_path):
 
     # Now simulate a write failure during the temp file phase
     state.update_entry("note2.md", "hash2", "/Obsidian/note2")
-    with patch("obsrm.sync_state.json.dump", side_effect=OSError("disk full")):
-        try:
-            state.save()
-        except OSError:
-            pass
+    with (
+        patch("obsrm.sync_state.json.dump", side_effect=OSError("disk full")),
+        contextlib.suppress(OSError),
+    ):
+        state.save()
 
     # Original file should be intact
     assert state_path.read_text() == original_content

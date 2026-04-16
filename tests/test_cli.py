@@ -714,7 +714,8 @@ def test_sync_invalid_config_exits(runner, tmp_path):
 
     result = runner.invoke(cli, ["sync", "--vault-path", str(tmp_path)])
     assert result.exit_code == 1
-    assert "invalid config" in result.output.lower() or "invalid config" in (result.output + getattr(result, "stderr", "")).lower()
+    combined = result.output + getattr(result, "stderr", "")
+    assert "invalid config" in combined.lower()
 
 
 @patch("obsrm.cli.RemarkableClient")
