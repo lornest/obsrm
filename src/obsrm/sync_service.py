@@ -4,9 +4,9 @@ import logging
 import shutil
 import tempfile
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable
 
 from obsrm.config import Config
 from obsrm.converter import ConversionError, convert_file

@@ -8,14 +8,13 @@ import sys
 from pathlib import Path
 
 import click
-
 from pydantic import ValidationError
 
 from obsrm.config import Config, load_config
 from obsrm.pull import list_remote_files
 from obsrm.remarkable import RemarkableClient, RmapiError
-from obsrm.sync_state import Changeset, SyncState
 from obsrm.sync_service import CollisionError, ProgressEvent, SyncService
+from obsrm.sync_state import Changeset, SyncState
 from obsrm.vault import scan_vault
 
 logger = logging.getLogger(__name__)
@@ -171,7 +170,7 @@ def sync(
         click.echo(
             "Rename files or disable flatten to resolve collisions.", err=True
         )
-        raise click.Abort()
+        raise click.Abort() from e
     except KeyboardInterrupt:
         click.echo("\n\nInterrupted by user.", err=True)
         click.echo("Progress saved.", err=True)
