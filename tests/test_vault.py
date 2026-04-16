@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from obsrm.vault import resolve_remote_path, scan_vault
+from obsrm.vault import check_remote_path_collisions, resolve_remote_path, scan_vault
 
 FIXTURES = Path(__file__).parent / "fixtures" / "sample_vault"
 
@@ -46,3 +46,25 @@ def test_resolve_remote_path_mirrored():
 def test_resolve_remote_path_flattened():
     assert resolve_remote_path("note.md", "/Obsidian", True) == "/Obsidian/note"
     assert resolve_remote_path("subfolder/note.md", "/Obsidian", True) == "/Obsidian/note"
+
+
+def test_flatten_collision_detected():
+    """Two files with the same stem in different folders collide when flattened."""
+    paths = ["a/note.md", "b/note.md"]
+    collisions = check_remote_path_collisions(paths, "/Obsidian", flatten=True)
+    assert "/Obsidian/note" in collisions
+    assert set(collisions["/Obsidian/note"]) == {"a/note.md", "b/note.md"}
+
+
+def test_no_collision_without_flatten():
+    """Same files don't collide when folder structure is preserved."""
+    paths = ["a/note.md", "b/note.md"]
+    collisions = check_remote_path_collisions(paths, "/Obsidian", flatten=False)
+    assert collisions == {}
+
+
+def test_no_collision_unique_names():
+    """Different filenames never collide even when flattened."""
+    paths = ["a/one.md", "b/two.md"]
+    collisions = check_remote_path_collisions(paths, "/Obsidian", flatten=True)
+    assert collisions == {}

@@ -6,7 +6,7 @@ import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
 
-from obsrm.remarkable import RemarkableClient
+from obsrm.remarkable import RemarkableClient, RmapiError
 
 logger = logging.getLogger(__name__)
 
@@ -17,9 +17,17 @@ def list_remote_files(client: RemarkableClient, target_folder: str) -> tuple[dic
     Returns (files_dict, listing_complete) where files_dict maps
     remote_path -> 'f' for files only, and listing_complete is False
     if any subfolders failed to list.
+
+    If the target folder doesn't exist yet (first run), it is created
+    and an empty dict is returned.
     """
     errors: list[str] = []
-    all_entries = client.list_recursive(target_folder, errors)
+    try:
+        all_entries = client.list_recursive(target_folder, errors)
+    except RmapiError:
+        logger.info("Target folder %s not found, creating it", target_folder)
+        client.ensure_folder(target_folder)
+        return {}, True
     files = {path: entry_type for path, entry_type in all_entries.items() if entry_type == "f"}
     return files, len(errors) == 0
 

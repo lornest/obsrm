@@ -46,7 +46,9 @@ def convert_file(
     except UnicodeDecodeError:
         # Fall back to latin-1 which accepts any byte sequence
         content = file_path.read_text(encoding="latin-1")
-    processed, title, images = process_markdown(content, file_path, vault_path)
+    processed, title, images = process_markdown(
+        content, file_path, vault_path, output_format=output_format
+    )
 
     if title is None:
         title = file_path.stem
@@ -85,16 +87,18 @@ def convert_file(
     ]
 
     if output_format == "epub":
-        cmd.extend(["--to", "epub3", "--mathml", "--epub-title-page=false"])
+        cmd.extend(["--to", "epub3", "--epub-title-page=false"])
     else:
         # PDF tuned for reMarkable e-ink display (1872x1404 @ 226 DPI ≈ 8.3" x 6.2")
         # Use A5 landscape which closely matches the aspect ratio
         cmd.extend(
             [
+                "--pdf-engine=xelatex",
+                "-H", _latex_preamble_path(),
                 "-V",
-                "geometry:paperwidth=8.3in",
+                "geometry:paperwidth=6.2in",
                 "-V",
-                "geometry:paperheight=6.2in",
+                "geometry:paperheight=8.3in",
                 "-V",
                 "geometry:margin=0.6in",
                 "-V",
@@ -129,6 +133,13 @@ def convert_file(
         raise ConversionError(f"Pandoc conversion failed:\n{result.stderr}")
 
     return output_path
+
+
+
+def _latex_preamble_path() -> str:
+    """Return path to the XeLaTeX preamble file for PDF output."""
+    preamble = _find_package_dir() / "../../styles" / "preamble.tex"
+    return str(preamble.resolve())
 
 
 def _find_package_dir() -> Path:

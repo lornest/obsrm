@@ -51,9 +51,9 @@ def test_sync_nothing_to_sync(mock_client_cls, runner, vault):
 
     # Pre-populate state so there are no changes
     state = SyncState(vault / ".sync-state.json")
-    from obsrm.vault import _hash_file
+    from obsrm.vault import hash_file
 
-    h = _hash_file(vault / "note.md")
+    h = hash_file(vault / "note.md")
     state.update_entry("note.md", h, "/Test/note")
     state.save()
 
@@ -63,7 +63,7 @@ def test_sync_nothing_to_sync(mock_client_cls, runner, vault):
 
 
 @patch("obsrm.cli.RemarkableClient")
-@patch("obsrm.cli.convert_file")
+@patch("obsrm.sync_service.convert_file")
 def test_sync_uploads_new_file(mock_convert, mock_client_cls, runner, vault):
     mock_client = MagicMock()
     mock_client_cls.return_value = mock_client
@@ -81,7 +81,7 @@ def test_sync_uploads_new_file(mock_convert, mock_client_cls, runner, vault):
 
 
 @patch("obsrm.cli.RemarkableClient")
-@patch("obsrm.cli.convert_file")
+@patch("obsrm.sync_service.convert_file")
 def test_sync_conversion_failure_continues(mock_convert, mock_client_cls, runner, vault):
     from obsrm.converter import ConversionError
 
@@ -96,7 +96,7 @@ def test_sync_conversion_failure_continues(mock_convert, mock_client_cls, runner
 
 
 @patch("obsrm.cli.RemarkableClient")
-@patch("obsrm.cli.convert_file")
+@patch("obsrm.sync_service.convert_file")
 def test_sync_upload_failure_continues(mock_convert, mock_client_cls, runner, vault):
     mock_client = MagicMock()
     mock_client_cls.return_value = mock_client
@@ -123,9 +123,9 @@ def test_sync_delete_failure_preserves_state(mock_client_cls, runner, vault):
     # Remove the file from vault but keep it in state
     state = SyncState(vault / ".sync-state.json")
     state.update_entry("gone.md", "oldhash", "/Test/gone")
-    from obsrm.vault import _hash_file
+    from obsrm.vault import hash_file
 
-    h = _hash_file(vault / "note.md")
+    h = hash_file(vault / "note.md")
     state.update_entry("note.md", h, "/Test/note")
     state.save()
 
@@ -148,9 +148,9 @@ def test_sync_delete_success_removes_state(mock_client_cls, runner, vault):
 
     state = SyncState(vault / ".sync-state.json")
     state.update_entry("gone.md", "oldhash", "/Test/gone")
-    from obsrm.vault import _hash_file
+    from obsrm.vault import hash_file
 
-    h = _hash_file(vault / "note.md")
+    h = hash_file(vault / "note.md")
     state.update_entry("note.md", h, "/Test/note")
     state.save()
 
@@ -237,7 +237,7 @@ def test_pull_downloads_new_file(mock_client_cls, runner, vault):
         md.write_text("# NewNote\n\n![[attachments/NewNote.pdf]]\n")
         return md, vault_path / "attachments" / "NewNote.pdf"
 
-    with patch("obsrm.pull.pull_file", side_effect=fake_pull_file):
+    with patch("obsrm.sync_service.pull_file", side_effect=fake_pull_file):
         result = runner.invoke(cli, ["pull", "--vault-path", str(vault)])
 
     assert result.exit_code == 0
@@ -255,7 +255,7 @@ def test_pull_failure_continues(mock_client_cls, runner, vault):
     mock_client_cls.return_value = mock_client
     mock_client.list_recursive.return_value = {"/Test/Bad": "f"}
 
-    with patch("obsrm.pull.pull_file", side_effect=RmapiError("download failed")):
+    with patch("obsrm.sync_service.pull_file", side_effect=RmapiError("download failed")):
         result = runner.invoke(cli, ["pull", "--vault-path", str(vault)])
 
     assert result.exit_code == 1
@@ -275,7 +275,7 @@ def test_pull_rmapi_not_found(mock_client_cls, runner, vault):
 
 def test_delete_pulled_file_removes_md_and_attachments(tmp_path):
     """_delete_pulled_file removes markdown and matching attachments."""
-    from obsrm.cli import _delete_pulled_file
+    from obsrm.sync_service import _delete_pulled_file
     from obsrm.sync_state import FileEntry
 
     vault = tmp_path
@@ -301,7 +301,7 @@ def test_delete_pulled_file_removes_md_and_attachments(tmp_path):
 
 def test_delete_pulled_file_in_subdirectory(tmp_path):
     """_delete_pulled_file handles files in subdirectories."""
-    from obsrm.cli import _delete_pulled_file
+    from obsrm.sync_service import _delete_pulled_file
     from obsrm.sync_state import FileEntry
 
     vault = tmp_path
@@ -335,9 +335,9 @@ def test_pull_deletes_pull_origin_removed_from_remarkable(mock_client_cls, runne
 
     state = SyncState(vault / ".sync-state.json")
     state.update_entry("pulled.md", "abc", "/Test/pulled", "2026-04-04T13:00:00Z", "pull")
-    from obsrm.vault import _hash_file
+    from obsrm.vault import hash_file
 
-    h = _hash_file(vault / "note.md")
+    h = hash_file(vault / "note.md")
     state.update_entry("note.md", h, "/Test/note")
     state.save()
 
@@ -358,9 +358,9 @@ def test_pull_flags_push_origin_for_repush(mock_client_cls, runner, vault):
     mock_client.list_recursive.return_value = {}
 
     state = SyncState(vault / ".sync-state.json")
-    from obsrm.vault import _hash_file
+    from obsrm.vault import hash_file
 
-    h = _hash_file(vault / "note.md")
+    h = hash_file(vault / "note.md")
     state.update_entry("note.md", h, "/Test/note")
     state.save()
 
@@ -370,7 +370,7 @@ def test_pull_flags_push_origin_for_repush(mock_client_cls, runner, vault):
 
 
 @patch("obsrm.cli.RemarkableClient")
-@patch("obsrm.cli.convert_file")
+@patch("obsrm.sync_service.convert_file")
 def test_sync_repushes_push_origin_deleted_on_remarkable(
     mock_convert, mock_client_cls, runner, vault
 ):
@@ -386,9 +386,9 @@ def test_sync_repushes_push_origin_deleted_on_remarkable(
 
     # Pre-populate state as if file was previously pushed
     state = SyncState(vault / ".sync-state.json")
-    from obsrm.vault import _hash_file
+    from obsrm.vault import hash_file
 
-    h = _hash_file(vault / "note.md")
+    h = hash_file(vault / "note.md")
     state.update_entry("note.md", h, "/Test/note")
     state.save()
 
@@ -411,9 +411,9 @@ def test_sync_pull_origin_deleted_locally_deletes_on_remarkable(mock_client_cls,
     mock_client.is_folder_empty.return_value = False
 
     state = SyncState(vault / ".sync-state.json")
-    from obsrm.vault import _hash_file
+    from obsrm.vault import hash_file
 
-    h = _hash_file(vault / "note.md")
+    h = hash_file(vault / "note.md")
     state.update_entry("note.md", h, "/Test/note")
     # Pull-origin file that no longer exists locally
     state.update_entry("handwritten.md", "abc", "/Test/handwritten", "2026-04-04T13:00:00Z", "pull")
@@ -431,7 +431,7 @@ def test_sync_pull_origin_deleted_locally_deletes_on_remarkable(mock_client_cls,
 
 
 @patch("obsrm.cli.RemarkableClient")
-@patch("obsrm.cli.convert_file")
+@patch("obsrm.sync_service.convert_file")
 def test_sync_force_reuploads_all(mock_convert, mock_client_cls, runner, vault):
     """Force flag should re-upload all files, even those already tracked."""
     mock_client = MagicMock()
@@ -443,9 +443,9 @@ def test_sync_force_reuploads_all(mock_convert, mock_client_cls, runner, vault):
 
     # Pre-track the file in state (no changes)
     state = SyncState(vault / ".sync-state.json")
-    from obsrm.vault import _hash_file
+    from obsrm.vault import hash_file
 
-    h = _hash_file(vault / "note.md")
+    h = hash_file(vault / "note.md")
     state.update_entry("note.md", h, "/Test/note")
     state.save()
 
@@ -458,7 +458,7 @@ def test_sync_force_reuploads_all(mock_convert, mock_client_cls, runner, vault):
 
 
 @patch("obsrm.cli.RemarkableClient")
-@patch("obsrm.cli.convert_file")
+@patch("obsrm.sync_service.convert_file")
 def test_sync_replaces_modified_file(mock_convert, mock_client_cls, runner, vault):
     """Modified files should be replaced, not uploaded as new."""
     mock_client = MagicMock()
@@ -490,10 +490,10 @@ def test_pull_detects_changed_pull_origin_file(mock_client_cls, runner, vault):
     mock_client.list_recursive.return_value = {"/Test/note": "f", "/Test/hw": "f"}
     mock_client.stat.return_value = {"ModifiedClient": "2026-04-04T15:00:00Z"}
 
-    from obsrm.vault import _hash_file
+    from obsrm.vault import hash_file
 
     state = SyncState(vault / ".sync-state.json")
-    h = _hash_file(vault / "note.md")
+    h = hash_file(vault / "note.md")
     state.update_entry("note.md", h, "/Test/note")
     state.update_entry("hw.md", "abc", "/Test/hw", "2026-04-04T13:00:00Z", "pull")
     state.save()
@@ -512,10 +512,10 @@ def test_pull_stat_failure_skips_change_check(mock_client_cls, runner, vault):
     mock_client.list_recursive.return_value = {"/Test/note": "f", "/Test/hw": "f"}
     mock_client.stat.side_effect = RmapiError("stat failed")
 
-    from obsrm.vault import _hash_file
+    from obsrm.vault import hash_file
 
     state = SyncState(vault / ".sync-state.json")
-    h = _hash_file(vault / "note.md")
+    h = hash_file(vault / "note.md")
     state.update_entry("note.md", h, "/Test/note")
     state.update_entry("hw.md", "abc", "/Test/hw", "2026-04-04T13:00:00Z", "pull")
     state.save()
@@ -528,7 +528,7 @@ def test_pull_stat_failure_skips_change_check(mock_client_cls, runner, vault):
 
 
 @patch("obsrm.cli.RemarkableClient")
-@patch("obsrm.cli.convert_file")
+@patch("obsrm.sync_service.convert_file")
 def test_sync_repush_failure_reports_error(mock_convert, mock_client_cls, runner, vault):
     """Re-push failure should be reported but not crash."""
     from obsrm.converter import ConversionError
@@ -539,9 +539,9 @@ def test_sync_repush_failure_reports_error(mock_convert, mock_client_cls, runner
     mock_convert.side_effect = ConversionError("pandoc broke")
 
     state = SyncState(vault / ".sync-state.json")
-    from obsrm.vault import _hash_file
+    from obsrm.vault import hash_file
 
-    h = _hash_file(vault / "note.md")
+    h = hash_file(vault / "note.md")
     state.update_entry("note.md", h, "/Test/note")
     state.save()
 
@@ -566,7 +566,7 @@ def test_resolve_vault_path_from_env(runner, vault, monkeypatch):
 
 def test_delete_pulled_file_cleans_nested_empty_dirs(tmp_path):
     """Empty parent directories should be cleaned up to the attachment root."""
-    from obsrm.cli import _delete_pulled_file
+    from obsrm.sync_service import _delete_pulled_file
     from obsrm.sync_state import FileEntry
 
     vault = tmp_path
@@ -613,9 +613,9 @@ def test_pull_skips_deletions_on_incomplete_listing(mock_client_cls, runner, vau
     pulled_md.write_text("# From subfolder\n")
 
     state = SyncState(vault / ".sync-state.json")
-    from obsrm.vault import _hash_file
+    from obsrm.vault import hash_file
 
-    h = _hash_file(vault / "note.md")
+    h = hash_file(vault / "note.md")
     state.update_entry("note.md", h, "/Test/note")
     state.update_entry(
         "subfolder_note.md", "abc", "/Test/FailedSubfolder/note", "2026-04-04T13:00:00Z", "pull"
@@ -646,10 +646,10 @@ def test_pull_downloads_changed_pull_origin_file(mock_client_cls, runner, vault)
     hw_md = vault / "hw.md"
     hw_md.write_text("# Old content\n")
 
-    from obsrm.vault import _hash_file
+    from obsrm.vault import hash_file
 
     state = SyncState(vault / ".sync-state.json")
-    h = _hash_file(vault / "note.md")
+    h = hash_file(vault / "note.md")
     state.update_entry("note.md", h, "/Test/note")
     state.update_entry("hw.md", "abc", "/Test/hw", "2026-04-04T13:00:00Z", "pull")
     state.save()
@@ -659,7 +659,7 @@ def test_pull_downloads_changed_pull_origin_file(mock_client_cls, runner, vault)
         md.write_text("# Updated content from reMarkable\n")
         return md, None
 
-    with patch("obsrm.pull.pull_file", side_effect=fake_pull_file):
+    with patch("obsrm.sync_service.pull_file", side_effect=fake_pull_file):
         result = runner.invoke(cli, ["pull", "--vault-path", str(vault)])
 
     assert result.exit_code == 0
@@ -704,3 +704,50 @@ def test_auth_existing_config_decline(runner, monkeypatch, tmp_path):
     result = runner.invoke(cli, ["auth"], input="n\n")
     assert result.exit_code == 0
     assert "Keeping existing authentication" in result.output
+
+
+def test_sync_invalid_config_exits(runner, tmp_path):
+    """Invalid config values produce a friendly error and exit 1."""
+    config = tmp_path / "sync-config.yaml"
+    config.write_text("remarkable:\n  format: invalid_format\n")
+    (tmp_path / "note.md").write_text("# Hello\n")
+
+    result = runner.invoke(cli, ["sync", "--vault-path", str(tmp_path)])
+    assert result.exit_code == 1
+    assert "invalid config" in result.output.lower() or "invalid config" in (result.output + getattr(result, "stderr", "")).lower()
+
+
+@patch("obsrm.cli.RemarkableClient")
+def test_sync_dry_run_without_rmapi(mock_client_cls, runner, vault):
+    """Dry-run gracefully degrades when rmapi is unavailable."""
+    mock_client_cls.side_effect = RmapiError("rmapi not found")
+
+    result = runner.invoke(cli, ["sync", "--vault-path", str(vault), "--dry-run"])
+    assert result.exit_code == 0
+    assert "pull phase skipped" in result.output
+    assert "dry run" in result.output
+
+
+@patch("obsrm.sync_service.convert_file")
+@patch("obsrm.cli.RemarkableClient")
+def test_sync_collision_error(mock_client_cls, mock_convert, runner, tmp_path):
+    """Colliding remote paths produce a clear error and abort."""
+    config = tmp_path / "sync-config.yaml"
+    config.write_text(
+        "remarkable:\n  target_folder: /Test\n  format: epub\n"
+        "sync:\n  flatten: true\n"
+        "vault:\n  include:\n    - '**/*.md'\n"
+    )
+    # Two files in different dirs that flatten to the same remote name
+    sub = tmp_path / "sub"
+    sub.mkdir()
+    (tmp_path / "note.md").write_text("# A\n")
+    (sub / "note.md").write_text("# B\n")
+
+    mock_client = MagicMock()
+    mock_client_cls.return_value = mock_client
+    mock_client.list_recursive.return_value = {}
+
+    result = runner.invoke(cli, ["sync", "--vault-path", str(tmp_path)])
+    assert result.exit_code != 0
+    assert "collision" in result.output.lower() or "same remote path" in result.output.lower()

@@ -1,6 +1,8 @@
 """Sync state persistence and changeset computation."""
 
 import json
+import os
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -68,8 +70,17 @@ class SyncState:
                 for entry in self.entries.values()
             }
         }
-        with open(self.state_file, "w") as f:
-            json.dump(data, f, indent=2, sort_keys=True)
+        # Write to a temp file in the same directory, then atomically replace.
+        # This prevents corruption if the process is interrupted mid-write.
+        parent = self.state_file.parent
+        fd, tmp_path = tempfile.mkstemp(dir=parent, suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w") as f:
+                json.dump(data, f, indent=2, sort_keys=True)
+            os.replace(tmp_path, self.state_file)
+        except BaseException:
+            os.unlink(tmp_path)
+            raise
 
     def compute_changeset(
         self, current_files: dict[str, str], delete_removed: bool = False

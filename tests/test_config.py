@@ -1,5 +1,8 @@
 """Tests for config loading and environment variable overrides."""
 
+import pytest
+from pydantic import ValidationError
+
 from obsrm.config import load_config
 
 
@@ -64,3 +67,16 @@ def test_empty_yaml_file(tmp_path):
     config_file.write_text("")
     config = load_config(tmp_path)
     assert config.remarkable.target_folder == "/Obsidian"
+
+
+def test_invalid_format_in_yaml_rejected(tmp_path):
+    config_file = tmp_path / "sync-config.yaml"
+    config_file.write_text("remarkable:\n  format: epbu\n")
+    with pytest.raises(ValidationError, match="epbu"):
+        load_config(tmp_path)
+
+
+def test_invalid_format_in_env_rejected(tmp_path, monkeypatch):
+    monkeypatch.setenv("REMARKABLE_FORMAT", "epbu")
+    with pytest.raises(ValueError, match="Invalid REMARKABLE_FORMAT"):
+        load_config(tmp_path)

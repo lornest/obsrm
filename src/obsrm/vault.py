@@ -41,7 +41,7 @@ def scan_vault(
         # Skip files inside hidden folders (dotfolders like .obsidian, .git, etc.)
         if any(part.startswith(".") for part in Path(rel_path).parts):
             continue
-        content_hash = _hash_file(file_path)
+        content_hash = hash_file(file_path)
         result[rel_path] = content_hash
 
     return result
@@ -71,7 +71,22 @@ def resolve_remote_path(rel_path: str, target_folder: str, flatten: bool) -> str
         return f"{target_folder}/{p.parent.as_posix()}/{name}"
 
 
-def _hash_file(file_path: Path) -> str:
+def check_remote_path_collisions(
+    rel_paths: list[str], target_folder: str, flatten: bool
+) -> dict[str, list[str]]:
+    """Check for multiple local paths that map to the same remote path.
+
+    Returns a dict mapping each colliding remote path to its list of local rel_paths.
+    Empty dict means no collisions.
+    """
+    remote_to_locals: dict[str, list[str]] = {}
+    for rel_path in rel_paths:
+        remote = resolve_remote_path(rel_path, target_folder, flatten)
+        remote_to_locals.setdefault(remote, []).append(rel_path)
+    return {remote: locals for remote, locals in remote_to_locals.items() if len(locals) > 1}
+
+
+def hash_file(file_path: Path) -> str:
     h = hashlib.sha256()
     with open(file_path, "rb") as f:
         for chunk in iter(lambda: f.read(8192), b""):

@@ -1,6 +1,8 @@
 """Configuration loading for obsrm."""
 
 import os
+from typing import Literal
+
 from pathlib import Path
 
 import yaml
@@ -9,7 +11,7 @@ from pydantic import BaseModel, Field
 
 class RemarkableConfig(BaseModel):
     target_folder: str = "/Obsidian"
-    format: str = "epub"  # "epub" or "pdf"
+    format: Literal["epub", "pdf"] = "epub"
 
 
 class VaultConfig(BaseModel):
@@ -57,6 +59,10 @@ def load_config(vault_path: Path, config_path: Path | None = None) -> Config:
     if env_folder := os.environ.get("REMARKABLE_TARGET_FOLDER"):
         config.remarkable.target_folder = env_folder
     if env_format := os.environ.get("REMARKABLE_FORMAT"):
+        if env_format not in ("epub", "pdf"):
+            raise ValueError(
+                f"Invalid REMARKABLE_FORMAT={env_format!r}. Must be 'epub' or 'pdf'."
+            )
         config.remarkable.format = env_format
 
     return config
